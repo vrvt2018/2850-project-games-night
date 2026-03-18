@@ -1,17 +1,14 @@
-product:
-    type: jvm/app
-
-dependencies:
-  - $libs.ktor.server.core
-  - $libs.ktor.server.netty
-  - $libs.logback.classic
-  - $libs.ktor.server.core
-  - $libs.ktor.server.config.yaml
-
-test-dependencies:
-  - $libs.ktor.server.test.host
-  - $libs.kotlin.test.junit
+product: jvm/app
 
 settings:
+  ktor: enabled
   jvm:
-    mainClass: io.ktor.server.netty.EngineMain
+    mainClass: com.example.ApplicationKt
+
+dependencies:
+  - $ktor.server.core
+  - $ktor.server.statusPages
+  - $ktor.server.netty
+  - $ktor.server.pebble
+  - $ktor.server.configYaml: runtime-only
+  - ch.qos.logback:logback-classic:1.5.22: runtime-only

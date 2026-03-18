@@ -1,0 +1,13 @@
+{%  extends "base.peb" %}
+    {% block content %}
+    <div>
+    <form>
+        <label for="username">Username/Email:</label>
+        <input type="text" id="username"></input><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password"></input><br>
+    </form>
+    <p>Haven't signed up? Sign up <a href="/signup">here</a></p>
+    </div>
+{% endblock %}
+
