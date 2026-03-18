@@ -1,0 +1,5 @@
+{%  extends "base.peb" %}
+{% block gameBoard %}
+    <p>This is the gameboard</p>
+{% endblock %}
+
