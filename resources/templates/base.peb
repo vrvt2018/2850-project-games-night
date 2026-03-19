@@ -12,11 +12,19 @@
 {#   crossorigin="anonymous"></script>#}
  <title>{% block title %}{{ title }}{% endblock %}</title>
  <style>
-    div {
+    .entryfield {
         width:300px;
         margin:auto;
         align-items:center;
         border:10px;
+    }
+
+    .box {
+        border: 2px solid white;
+        width: 1000px;
+        height: 500px;
+        padding: 100px
+        float:left;
     }
  </style>
 </head>
