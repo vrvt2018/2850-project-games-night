@@ -1,5 +1,14 @@
 {%  extends "base.peb" %}
-{% block gameBoard %}
+{% block content %}
     <p>This is the gameboard</p>
+    <canvas id="gameCanvas">
+        Game not supported by browser!
+    </canvas>
+    <script {# src="{{ gameScriptSrc }}"#}>
+        let canvas = document.getElementById("gameCanvas");
+        let ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#FF0000";
+        ctx.fillRect(0,0,80,80);
+    </script>
 {% endblock %}
 

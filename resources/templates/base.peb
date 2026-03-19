@@ -21,6 +21,10 @@
 
     .box {
         border: 2px solid white;
+        width: 1000px;
+        height: 500px;
+        padding: 100px
+        float:left;
     }
  </style>
 </head>
