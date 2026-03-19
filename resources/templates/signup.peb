@@ -1,6 +1,6 @@
     {%  extends "base.peb" %}
     {% block content %}
-    <div>
+    <div class="entryfield">
     <form>
         <label for="username">Username:</label>
         <input type="text" id="username"></input><br>

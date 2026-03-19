@@ -1,0 +1,12 @@
+{% extends "base.peb" %}
+    {% block content %}
+    <h1>Games</h1>
+    <div class="box">
+        <ul>
+        <li><img src="resources/assets/chess/Chess_Clt45.svg" alt="Chess Logo"></img>Chess</li>
+        </ul>
+    </div>
+
+    <div class="box">
+    </div>
+    {% endblock %}
