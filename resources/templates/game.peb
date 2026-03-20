@@ -1,5 +1,40 @@
-{%  extends "base.peb" %}
-{% block gameBoard %}
-    <p>This is the gameboard</p>
+{% extends "base.peb" %}
+{% block content %}
+  <section style="margin-top:1rem;">
+    <h1>{{ title }}</h1>
+    {% if user %}
+      <p>Welcome back, <strong>{{ user }}</strong>! Pick a game from the list below.</p>
+    {% endif %}
+
+    {% if hasGames %}
+      <div style="display:grid;gap:1rem;">
+        {% for game in games %}
+          <article style="border:1px solid #ddd;padding:1rem;border-radius:10px;background:#fff;">
+            <h2>{{ game.name }}</h2>
+            <p>Players: {{ game.maxPlayers }}</p>
+            <a href="/games/{{ game.name | lower }}" class="button">Open details</a>
+            <form action="/api/games/{{ game.name | lower }}/start" method="post" style="margin-top:0.5rem;">
+              <button type="submit">Start {{ game.name }}</button>
+            </form>
+          </article>
+        {% endfor %}
+      </div>
+    {% elseif game is defined %}
+      <div style="padding:1.2rem;border:1px solid #c1c1c1;border-radius:12px;background:#f7fafc;">
+        <h2>{{ game.name }} ({{ game.maxPlayers }} players)</h2>
+        <p>Game details and live dashboard placeholder.</p>
+        {% if game.name == 'Chess' %}
+          <p>Chess board placeholder: draw grid + pieces here.</p>
+        {% else %}
+          <p>{{ game.name }} session placeholder.</p>
+        {% endif %}
+        <form action="/api/games/{{ game.name | lower }}/start" method="post" style="margin-top:1rem;">
+          <button type="submit">Start this game</button>
+        </form>
+      </div>
+    {% else %}
+      <p>No games are available right now.</p>
+    {% endif %}
+  </section>
 {% endblock %}
 
