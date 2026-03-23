@@ -35,7 +35,7 @@ class GoFish(name: String = "Go Fish") : Game(name, 4) {
 
     fun ask(from: Int, to: Int, rank: Any): Boolean {
         val targetHand = players[to]
-        val matches = targetHand.filter { it.rank == rank }
+        val matches = targetHand.filter { it.rank.toString() == rank.toString() }
         return if (matches.isNotEmpty()) {
             players[from].addAll(matches)
             targetHand.removeAll(matches)
