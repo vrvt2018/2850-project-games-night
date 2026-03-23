@@ -1,7 +1,5 @@
 package com.example
 
-import com.example.games.Deck
-import com.example.games.Game
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.http.content.resources
@@ -56,8 +54,8 @@ fun Application.configureRouting() {
 
         get("/games/{name}") {
             val name = call.parameters["name"] ?: return@get call.respondText("game name required", status = HttpStatusCode.BadRequest)
-            val game = findGameByName(name)
-            if (game == null) return@get call.respondText("game not found", status = HttpStatusCode.NotFound)
+            val game =
+                findGameByName(name) ?: return@get call.respondText("game not found", status = HttpStatusCode.NotFound)
             val user = call.request.cookies["AUTH_TOKEN"]?.let { getUsernameByToken(it) }
             val model = mutableMapOf<String, Any>("title" to game.name, "game" to mapOf("name" to game.name, "maxPlayers" to game.maxPlayers), "hasGames" to false)
             if (user != null) model["user"] = user
@@ -98,9 +96,9 @@ fun Application.configureRouting() {
         }
 
         post("/api/auth/login") {
-            val formParams = call.receiveParameters()
-            val username = formParams["username"]?.trim() ?: return@post call.respondText("username required", status = HttpStatusCode.BadRequest)
-            val password = formParams["password"] ?: return@post call.respondText("password required", status = HttpStatusCode.BadRequest)
+            val formParams = call.receiveParameters() // Get results from form
+            val username = formParams["username"]?.trim() ?: return@post call.respondText("username required", status = HttpStatusCode.BadRequest) // No username
+            val password = formParams["password"] ?: return@post call.respondText("password required", status = HttpStatusCode.BadRequest) // No password
 
             val user = findUserByCredentials(username, hashPassword(password))
             if (user == null) {
@@ -132,8 +130,8 @@ fun Application.configureRouting() {
 
         get("/api/games/{name}") {
             val name = call.parameters["name"] ?: return@get call.respondText("game name required", status = HttpStatusCode.BadRequest)
-            val game = findGameByName(name)
-            if (game == null) return@get call.respondText("game not found", status = HttpStatusCode.NotFound)
+            val game =
+                findGameByName(name) ?: return@get call.respondText("game not found", status = HttpStatusCode.NotFound)
             call.respond(mapOf("name" to game.name, "maxPlayers" to game.maxPlayers))
         }
 
@@ -146,18 +144,18 @@ fun Application.configureRouting() {
         }
 
         get("/api/auth/me") {
-            val token = call.request.cookies["AUTH_TOKEN"]
-            if (token == null) {
-                return@get call.respondText("not authenticated", status = HttpStatusCode.Unauthorized)
-            }
-            val username = getUsernameByToken(token)
-            if (username == null) {
-                return@get call.respondText("not authenticated", status = HttpStatusCode.Unauthorized)
-            }
-            val email = getUserEmail(username)
-            if (email == null) {
-                return@get call.respondText("user not found", status = HttpStatusCode.NotFound)
-            }
+            val token = call.request.cookies["AUTH_TOKEN"] ?: return@get call.respondText(
+                "not authenticated",
+                status = HttpStatusCode.Unauthorized
+            )
+            val username = getUsernameByToken(token) ?: return@get call.respondText(
+                "not authenticated",
+                status = HttpStatusCode.Unauthorized
+            )
+            val email = getUserEmail(username) ?: return@get call.respondText(
+                "user not found",
+                status = HttpStatusCode.NotFound
+            )
             call.respond(mapOf("username" to username, "email" to email))
         }
 
