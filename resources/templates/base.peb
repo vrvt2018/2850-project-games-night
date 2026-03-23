@@ -29,7 +29,22 @@
  </style>
 </head>
 <body>
-<main class="container">
+<header style="background:#1a202c;color:#fff;padding:1rem;">
+  <div style="max-width:1000px;margin:auto;display:flex;justify-content:space-between;align-items:center;">
+    <a href="/" style="color:#fff;font-weight:bold;text-decoration:none;">Games Night</a>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <nav>
+        <a href="/" style="color:#fff;margin-right:1rem;text-decoration:none;">Login</a>
+        <a href="/signup" style="color:#fff;margin-right:1rem;text-decoration:none;">Signup</a>
+        <a href="/games" style="color:#fff;text-decoration:none;">Games</a>
+      </nav>
+      {% if user %}
+        <span style="font-size:0.9rem;">Logged in as <strong>{{ user }}</strong></span>
+      {% endif %}
+    </div>
+  </div>
+</header>
+<main class="container" style="padding:1.5rem;max-width:1000px;margin:auto;">
 {% block content %}{% endblock %}
 </main>
 </body>

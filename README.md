@@ -33,3 +33,29 @@ If the server starts successfully, you'll see the following output:
 2024-12-04 14:32:45.682 [main] INFO  Application - Responding at http://0.0.0.0:8080
 ```
 
+## Database UI (H2)
+
+This project persists data in H2 by default. To inspect data:
+
+1. Run the app once so the DB file exists.
+2. Start H2 console:
+
+```bash
+java -cp ~/.m2/repository/com/h2database/h2/<version>/h2-<version>.jar org.h2.tools.Server -web -tcp -ifNotExists
+```
+
+3. Open `http://localhost:8082`, connect with:
+   - JDBC URL: `jdbc:h2:./build/db/games-night;MODE=PostgreSQL;DB_CLOSE_DELAY=-1`
+   - User: `sa`
+   - Password: ``
+
+4. Execute SQL:
+
+```sql
+SELECT * FROM users;
+SELECT * FROM games;
+SELECT * FROM sessions;
+```
+
+Alternatively, point `DB_URL` to Postgres and inspect with PgAdmin/DBeaver.
+
