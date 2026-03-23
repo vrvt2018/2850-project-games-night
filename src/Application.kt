@@ -8,6 +8,8 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.serialization.gson.*
 import io.pebbletemplates.pebble.loader.ClasspathLoader
+import com.example.network.GoFishSocket
+import io.ktor.server.websocket.*
 
 fun main(args: Array<String>) {
     io.ktor.server.netty.EngineMain.main(args)
@@ -19,6 +21,12 @@ fun Application.module() {
     configureRouting()
     configureTemplates()
     configureApi()
+    install(WebSockets)
+    routing {
+        webSocket("/gofish") {
+            GoFishSocket.handle(this)
+        }
+    }
 }
 
 fun Application.configureStatusPages() {
