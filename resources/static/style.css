@@ -1,0 +1,218 @@
+/* Custom CSS complementing Pico CSS */
+
+:root {
+  --gn-primary: #8b5cf6;
+  --gn-primary-hover: #7c3aed;
+  --gn-bg-dark: #111827;
+  --gn-bg-card: #1f2937;
+  --gn-text: #f3f4f6;
+  --gn-accent: #3b82f6;
+}
+
+body {
+  background-color: var(--gn-bg-dark);
+  color: var(--gn-text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Accessibility: Skip Link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--gn-primary);
+  color: white;
+  padding: 8px;
+  z-index: 100;
+  transition: top 0.2s;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* Navbar */
+.navbar {
+  background-color: var(--gn-bg-card);
+  border-bottom: 1px solid #374151;
+  padding: 1rem;
+}
+.nav-container {
+  max-width: 1200px;
+  margin: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.nav-brand {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--gn-primary);
+  text-decoration: none;
+}
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+.nav-link {
+  color: #d1d5db;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-link:hover {
+  color: white;
+}
+.nav-user {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  padding: 2rem 1rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Cards & Containers */
+.card {
+  background: var(--gn-bg-card);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #374151;
+}
+.game-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.game-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+  border-color: var(--gn-primary);
+}
+
+/* Buttons */
+button, .button {
+  background-color: var(--gn-primary) !important;
+  border: none !important;
+  transition: background-color 0.2s, transform 0.1s !important;
+}
+button:hover, .button:hover {
+  background-color: var(--gn-primary-hover) !important;
+  transform: translateY(-1px);
+}
+.btn-outline {
+  background-color: transparent !important;
+  border: 2px solid var(--gn-primary) !important;
+  color: var(--gn-primary) !important;
+}
+.btn-outline:hover {
+  background-color: var(--gn-primary) !important;
+  color: white !important;
+}
+
+/* Forms */
+input, select {
+  background-color: #374151 !important;
+  color: white !important;
+  border: 1px solid #4b5563 !important;
+}
+input:focus, select:focus {
+  border-color: var(--gn-primary) !important;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2) !important;
+}
+.error-msg {
+  background: #7f1d1d;
+  color: #fca5a5;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 1px solid #b91c1c;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+  border-top: 1px solid #374151;
+  background-color: var(--gn-bg-card);
+}
+
+/* Game Lobby Specifics */
+.lobby-panel {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.lobby-box {
+  flex: 1;
+  min-width: 300px;
+}
+
+/* Chess Board */
+.chess-board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  border: 2px solid #333;
+}
+.chess-square {
+  aspect-ratio: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+.chess-square.light { background-color: #f0d9b5; color: #000; }
+.chess-square.dark { background-color: #b58863; color: #000; }
+.chess-square.selected { background-color: #7b61ff; color: #fff; }
+.chess-square.legal { position: relative; }
+.chess-square.legal::after {
+  content: '';
+  position: absolute;
+  width: 25%;
+  height: 25%;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+}
+
+/* Go Fish Hands */
+.card-image {
+  width: 100px;
+  border-radius: 6px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+.card-image:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
+}
+.players-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.player-box {
+  background: #374151;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+}
+.player-box.active-turn {
+  border: 2px solid var(--gn-primary);
+  background: #2e3846;
+}

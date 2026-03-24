@@ -2,50 +2,40 @@
 <!doctype html>
 <html lang="en">
 <head>
- <meta charset="utf-8">
- <meta name="viewport" content="width=device-width, initial-scale=1">
- <meta name="color-scheme" content="light dark">
- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.jade.min.css">
-{# <script#}
-{#   src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"#}
-{#   integrity="sha384-/TgkGk7p307TH7EXJDuUlgG3Ce1UVolAOFopFekQkkXihi5u/6OCvVKyz1W+idaz"#}
-{#   crossorigin="anonymous"></script>#}
- <title>{% block title %}{{ title }}{% endblock %}</title>
- <style>
-    .entryfield {
-        width:300px;
-        margin:auto;
-        align-items:center;
-        border:10px;
-    }
-
-    .box {
-        border: 2px solid white;
-        width: 1000px;
-        height: 500px;
-        padding: 100px
-        float:left;
-    }
- </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Games Night - Multiplayer Web Games">
+  <title>{% block title %}{{ title }}{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.jade.min.css">
+  <link rel="stylesheet" href="/resources/style.css">
 </head>
 <body>
-<header style="background:#1a202c;color:#fff;padding:1rem;">
-  <div style="max-width:1000px;margin:auto;display:flex;justify-content:space-between;align-items:center;">
-    <a href="/" style="color:#fff;font-weight:bold;text-decoration:none;">Games Night</a>
-    <div style="display:flex;align-items:center;gap:1rem;">
-      <nav>
-        <a href="/" style="color:#fff;margin-right:1rem;text-decoration:none;">Login</a>
-        <a href="/signup" style="color:#fff;margin-right:1rem;text-decoration:none;">Signup</a>
-        <a href="/games" style="color:#fff;text-decoration:none;">Games</a>
+  <a href="#content" class="skip-link">Skip to content</a>
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">Games Night</a>
+      <nav class="nav-menu">
+        {% if user %}
+          <a href="/games" class="nav-link">Games</a>
+          <a href="/leaderboard" class="nav-link">Leaderboard</a>
+          <span class="nav-user">Logged in as <strong>{{ user }}</strong></span>
+          <a href="/logout" class="nav-link" style="color: #fca5a5;">Logout</a>
+        {% else %}
+          <a href="/" class="nav-link">Login</a>
+          <a href="/signup" class="nav-link outline">Sign Up</a>
+        {% endif %}
       </nav>
-      {% if user %}
-        <span style="font-size:0.9rem;">Logged in as <strong>{{ user }}</strong></span>
-      {% endif %}
     </div>
-  </div>
-</header>
-<main class="container" style="padding:1.5rem;max-width:1000px;margin:auto;">
-{% block content %}{% endblock %}
-</main>
+  </header>
+
+  <main id="content" class="container main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="container text-center">
+      <p>&copy; 2026 Games Night. Built for COMP2850.</p>
+    </div>
+  </footer>
 </body>
 </html>

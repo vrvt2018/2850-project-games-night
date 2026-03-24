@@ -1,54 +1,64 @@
 package com.example.games
 
-enum class Suit
-{
-    Hearts,
-    Diamonds,
-    Spades,
-    Clubs
-}
+/**
+ * Represents the four suits of a standard playing card deck.
+ */
+enum class Suit { Hearts, Diamonds, Spades, Clubs }
 
+/**
+ * Represents face/picture cards that have a name rather than a number.
+ */
+enum class PictureCard { Jack, Queen, King }
 
+/**
+ * Represents a single playing card.
+ *
+ * @param suit The suit of the card (Hearts, Diamonds, Spades, Clubs).
+ * @param _rank Internal integer rank (1–13). 1=Ace, 11=Jack, 12=Queen, 13=King.
+ */
+class Card(val suit: Suit, private val _rank: Int) {
 
-class Deck {
-    // Initialise cards as full deck of cards
-    var cards = Array<Card>(52) {
-        Card(Suit.entries[it/13], it%13+1)
+    /**
+     * The rank of this card: an Int (1–10) for numbered cards, or a [PictureCard] for face cards.
+     * Ace is represented as 1.
+     */
+    val rank: Any
+        get() = if (_rank in 1..10) _rank else PictureCard.entries[_rank - 11]
+
+    /**
+     * Human-readable rank string for WebSocket messaging (e.g. "A", "Jack", "7").
+     */
+    fun rankString(): String = when (_rank) {
+        1 -> "A"
+        11 -> "Jack"
+        12 -> "Queen"
+        13 -> "King"
+        else -> _rank.toString()
     }
-}
 
-enum class PictureCard
-{
-    Jack,
-    Queen,
-    King
-}
-
-class Card(val suit : Suit, private val _rank : Int)
-{
-    val rank : Any
-        get()
-    {
-        if(_rank == 1) return "A"
-        if(_rank in 2..10) return _rank
-        else return PictureCard.entries[_rank - 11] // If picture card, return its name from enum
-    }
-
+    /**
+     * Returns the URL path to this card's image asset.
+     * Expects card images at /resources/assets/cards/<rank>_of_<suit>.svg
+     */
     fun imageUrl(): String {
-        val r = when (_rank) {
+        val rankPart = when (_rank) {
             1 -> "ace"
             11 -> "jack"
             12 -> "queen"
             13 -> "king"
             else -> _rank.toString()
         }
-        val s = suit.name.lowercase()
-        // Assuming images are named rank_of_suit.png in a cards folder or external
-        return "https://raw.githubusercontent.com/hayeah/playing-cards-assets/master/png/${r}_of_${s}.png" 
+        return "/resources/assets/cards/${rankPart}_of_${suit.name.lowercase()}.svg"
     }
 
-    override fun toString() : String
-    {
-        return "${rank.toString()} of ${suit.toString()}"
-    }
+    override fun toString(): String = "${rankString()} of ${suit.name}"
+}
+
+/**
+ * A standard 52-card deck.
+ * Cards are ordered: Ace through King for each suit (Hearts, Diamonds, Spades, Clubs).
+ */
+class Deck {
+    /** All 52 cards in the deck. Shuffle before dealing. */
+    val cards: Array<Card> = Array(52) { Card(Suit.entries[it / 13], it % 13 + 1) }
 }

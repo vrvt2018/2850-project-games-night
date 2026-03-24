@@ -1,0 +1,80 @@
+{% extends "base.peb" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<section>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+    <h1>Chess</h1>
+    <a href="/games" class="button btn-outline">Back to Games</a>
+  </div>
+
+  <!-- Shared Lobby Component -->
+  <div id="lobby" class="card">
+    <h2 style="margin-top:0;">Lobby</h2>
+    <div class="lobby-panel">
+      
+      <div class="lobby-box" style="border-right:1px solid #374151;padding-right:2rem;">
+        <h3>Create a Room</h3>
+        <p style="color:#9ca3af;font-size:0.9rem;">Host a new session (you will play as White).</p>
+        <button id="btnCreate" class="button" style="width:100%;" onclick="createRoom()">Create Room</button>
+      </div>
+      
+      <div class="lobby-box">
+        <h3>Join a Room</h3>
+        <p style="color:#9ca3af;font-size:0.9rem;">Enter a 4-digit code provided by your host (you will play as Black).</p>
+        <div style="display:flex;gap:0.5rem;align-items:flex-end;">
+          <div style="flex:1;">
+            <label for="roomIdInput">Room Code</label>
+            <input type="text" id="roomIdInput" placeholder="e.g. 1234" maxlength="4" style="margin-bottom:0;">
+          </div>
+          <button id="btnJoin" class="button" onclick="joinRoom()">Join</button>
+        </div>
+        <p id="joinError" style="color:#fca5a5;margin-top:0.5rem;display:none;font-size:0.85rem;"></p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Waiting Room Area -->
+  <div id="waitingRoom" class="card" style="display:none;text-align:center;">
+    <h2 style="margin-top:0;">Waiting Room</h2>
+    <div style="font-size:2rem;font-weight:bold;color:var(--gn-primary);letter-spacing:4px;margin:1rem 0;" id="displayRoomId">----</div>
+    <p>Share this code with your opponent.</p>
+    <div style="background:#374151;padding:1rem;border-radius:8px;display:inline-block;min-width:200px;margin:1rem 0;">
+      <strong>Players joined:</strong> <span id="playerCount">1</span> / 2
+    </div>
+    <br>
+    <button id="btnStart" class="button" style="display:none;margin:0 auto;width:250px;" disabled onclick="startGame()">Start Game</button>
+    <p id="waitingMessage" style="color:#9ca3af;display:none;">Waiting for host to start...</p>
+  </div>
+
+  <!-- Active Game Area -->
+  <div id="gameArea" style="display:none;">
+    
+    <div id="turnAlert" class="card" style="margin-bottom:2rem;background-color:rgba(139, 92, 246, 0.1);border-color:var(--gn-primary);text-align:center;">
+      <h3 style="margin:0;color:var(--gn-primary);" id="turnText">Game Started</h3>
+      <p style="margin:0.25rem 0 0;color:#d1d5db;font-size:0.9rem;" id="playerColorText">You are playing as White</p>
+    </div>
+
+    <!-- Chess Board Container -->
+    <div class="chess-board" id="boardEl">
+      <!-- 64 squares populated by JS -->
+    </div>
+
+    <div style="text-align:center;margin-top:2rem;">
+      <button class="button btn-outline" style="color:#fca5a5;border-color:#fca5a5;" onclick="resign()">Resign Game</button>
+    </div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div id="gameOverArea" class="card" style="display:none;text-align:center;padding:4rem 2rem;">
+    <h1 style="color:var(--gn-primary);font-size:3rem;margin-bottom:1rem;">Checkmate</h1>
+    <h2 id="winnerText" style="color:white;margin-bottom:2rem;"></h2>
+    <p>Stats have been recorded to the leaderboard.</p>
+    <a href="/games" class="button" style="display:inline-block;margin-top:2rem;">Return to Games</a>
+  </div>
+
+</section>
+
+<!-- Include script that connects WebSocket and handles UI updates -->
+<script src="/resources/chess.js"></script>
+{% endblock %}

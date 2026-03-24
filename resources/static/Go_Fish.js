@@ -1,78 +1,205 @@
-const ws = new WebSocket("ws://localhost:8080/gofish")
-let isHost = false
-ws.onmessage = (e)=>{
-const msg = JSON.parse(e.data)
+const ws = new WebSocket(`ws://${location.host}/gofish`);
+let myPlayerIndex = -1;
+let isHost = false;
 
-switch(msg.type){
+// UI Elements
+const elLobby = document.getElementById("lobby");
+const elWaitingRoom = document.getElementById("waitingRoom");
+const elGameArea = document.getElementById("gameArea");
+const elGameOver = document.getElementById("gameOverArea");
 
-case "ROOM_CREATED":
-isHost = msg.host
-document.getElementById("roomInfo").innerText="Room ID: "+msg.roomId
-if(isHost) document.getElementById("startBtn").style.display="block"
-break
+// WebSocket handlers
+ws.onmessage = (e) => {
+  const msg = JSON.parse(e.data);
+  switch (msg.type) {
+    case "ROOM_CREATED":
+      isHost = true;
+      myPlayerIndex = msg.playerIndex;
+      showWaitingRoom(msg.roomId);
+      break;
 
-case "PLAYER_UPDATE":
-document.getElementById("players").innerText="Players: "+msg.count+"/4"
-break
+    case "JOIN_OK":
+      myPlayerIndex = msg.playerIndex;
+      break;
 
-case "START":
-document.getElementById("lobby").style.display="none"
-document.getElementById("game").style.display="block"
-renderHand(msg.cards)
-break
+    case "JOIN_FAIL":
+      document.getElementById("joinError").innerText = msg.reason;
+      document.getElementById("joinError").style.display = "block";
+      break;
 
-case "ASK_RESULT":
-alert(msg.success ? "Got cards!" : "Go Fish!")
-break
+    case "PLAYER_UPDATE":
+      // We only care about this before game starts
+      if (document.getElementById("playerCount")) {
+        document.getElementById("playerCount").innerText = msg.count;
+        if (isHost && msg.count >= 2) {
+          document.getElementById("btnStart").disabled = false;
+          document.getElementById("btnStart").style.display = "block";
+        }
+      }
+      break;
 
-case "GAME_END":
-document.getElementById("game").style.display="none"
-document.getElementById("end").style.display="block"
-document.getElementById("result").innerText =
-    msg.winner == 0 ? "You Win!" : "Player "+msg.winner+" Wins!"
-break
+    case "START":
+      elLobby.style.display = "none";
+      elWaitingRoom.style.display = "none";
+      elGameArea.style.display = "block";
+      updateGameState(msg);
+      break;
+
+    case "STATE":
+      updateGameState(msg);
+      break;
+
+    case "ASK_RESULT":
+      showActionResult(msg.success);
+      updateGameState(msg);
+      break;
+
+    case "GAME_END":
+      elGameArea.style.display = "none";
+      elGameOver.style.display = "block";
+      const winnerText = msg.winner === myPlayerIndex ? "You Win!" : 
+                         (msg.winner === -1 ? "It's a tie!" : `Player ${msg.winner + 1} Wins!`);
+      document.getElementById("winnerText").innerText = winnerText;
+      break;
+  }
+};
+
+// Lobby Actions
+function createRoom() {
+  ws.send(JSON.stringify({ type: "CREATE" }));
 }
+
+function joinRoom() {
+  const input = document.getElementById("roomIdInput");
+  const id = input.value.trim();
+  if (id.length !== 4) {
+    document.getElementById("joinError").innerText = "Enter a 4-digit code";
+    document.getElementById("joinError").style.display = "block";
+    return;
+  }
+  document.getElementById("joinError").style.display = "none";
+  document.getElementById("displayRoomId").innerText = id;
+  elLobby.style.display = "none";
+  elWaitingRoom.style.display = "block";
+  document.getElementById("waitingMessage").style.display = "block";
+  ws.send(JSON.stringify({ type: "JOIN", roomId: id }));
 }
 
-function createRoom(){
-ws.send(JSON.stringify({type:"CREATE"}))
+function showWaitingRoom(roomId) {
+  document.getElementById("displayRoomId").innerText = roomId;
+  elLobby.style.display = "none";
+  elWaitingRoom.style.display = "block";
 }
 
-function joinRoom(){
-const id=document.getElementById("roomId").value
-ws.send(JSON.stringify({
-type:"JOIN",
-roomId:id
-}))
+function startGame() {
+  ws.send(JSON.stringify({ type: "START" }));
 }
 
-function startGame(){
-ws.send(JSON.stringify({type:"START"}))
+// Gameplay Actions
+function askForCard() {
+  const target = document.getElementById("askPlayerSelect").value;
+  const rank = document.getElementById("askRankSelect").value;
+  if (target === "" || rank === "") return;
+  
+  ws.send(JSON.stringify({
+    type: "ASK",
+    target: parseInt(target),
+    rank: rank
+  }));
 }
 
-function renderHand(cards){
-const div=document.getElementById("hand")
-div.innerHTML=""
-cards.forEach((c,i)=>{
-const img=document.createElement("img")
-img.src=c
-img.width=90
-img.onclick=()=>{
-ws.send(JSON.stringify({
-type:"ASK",
-target:0,
-rank:extractRank(c)
-}))
+function endTurn() {
+  ws.send(JSON.stringify({ type: "END_TURN" }));
 }
 
-div.appendChild(img)
-})
+function showActionResult(success) {
+  const resEl = document.getElementById("actionResult");
+  resEl.style.display = "block";
+  if (success) {
+    resEl.style.color = "#34d399";
+    resEl.innerText = "Match found! They handed over their cards. You get another turn.";
+    document.getElementById("btnEndTurn").style.display = "none";
+  } else {
+    resEl.style.color = "#fca5a5";
+    resEl.innerText = "Go Fish! You drew a card.";
+    // Replaced asking UI with end turn button
+    document.getElementById("btnAsk").disabled = true;
+    document.getElementById("btnEndTurn").style.display = "inline-block";
+  }
 }
 
-function extractRank(url){
-if(url.includes("ace")) return "A"
-if(url.includes("jack")) return "Jack"
-if(url.includes("queen")) return "Queen"
-if(url.includes("king")) return "King"
-return url.match(/(\d+)_of/)[1]
+// State Rendering
+function updateGameState(state) {
+  const isMyTurn = state.turn === myPlayerIndex;
+  
+  // Update turn alert
+  const alertEl = document.getElementById("turnAlert");
+  const turnTextEl = document.getElementById("turnText");
+  if (isMyTurn) {
+    alertEl.style.backgroundColor = "rgba(139, 92, 246, 0.2)";
+    alertEl.style.borderColor = "var(--gn-primary)";
+    turnTextEl.innerText = "It's your turn!";
+  } else {
+    alertEl.style.backgroundColor = "transparent";
+    alertEl.style.borderColor = "#374151";
+    turnTextEl.innerText = `Waiting for Player ${state.turn + 1}'s turn...`;
+  }
+  document.getElementById("deckSizeText").innerText = `Deck: ${state.deckSize} cards remaining`;
+
+  // Update action area
+  const actionArea = document.getElementById("actionArea");
+  if (isMyTurn) {
+    actionArea.style.display = "block";
+    document.getElementById("btnAsk").disabled = false;
+    document.getElementById("btnEndTurn").style.display = "none";
+    
+    // Clear old result unless we just had an ask result
+    if (state.type !== "ASK_RESULT") {
+      document.getElementById("actionResult").style.display = "none";
+    }
+
+    // Populate rank dropdown based on current hand
+    const rankSelect = document.getElementById("askRankSelect");
+    const uniqueRanks = [...new Set(state.myHandRanks)];
+    rankSelect.innerHTML = "<option value='' disabled selected>-- Select a rank --</option>";
+    uniqueRanks.forEach(r => {
+      rankSelect.innerHTML += `<option value="${r}">${r}</option>`;
+    });
+
+    // Populate target dropdown
+    const targetSelect = document.getElementById("askPlayerSelect");
+    targetSelect.innerHTML = "<option value='' disabled selected>-- Select player --</option>";
+    state.handSizes.forEach((size, i) => {
+      if (i !== myPlayerIndex) {
+        targetSelect.innerHTML += `<option value="${i}">Player ${i + 1} (${size} cards)</option>`;
+      }
+    });
+  } else {
+    actionArea.style.display = "none";
+  }
+
+  // Render my hand
+  const handDiv = document.getElementById("myHand");
+  handDiv.innerHTML = "";
+  state.myHand.forEach(url => {
+    handDiv.innerHTML += `<img src="${url}" class="card-image" alt="card" style="width:80px;">`;
+  });
+  document.getElementById("yourBooksText").innerText = `Books completed: ${state.books[myPlayerIndex]}`;
+
+  // Render opponents
+  const oppGrid = document.getElementById("opponentsGrid");
+  oppGrid.innerHTML = "";
+  state.handSizes.forEach((size, i) => {
+    if (i === myPlayerIndex) return;
+    const isTheirTurn = state.turn === i;
+    const activeClass = isTheirTurn ? "active-turn" : "";
+    
+    oppGrid.innerHTML += `
+      <div class="player-box ${activeClass}">
+        <h4 style="margin:0 0 0.5rem;">Player ${i + 1}</h4>
+        <p style="margin:0;font-size:0.9rem;color:#9ca3af;">${size} cards in hand</p>
+        <p style="margin:0.25rem 0 0;font-size:0.9rem;color:var(--gn-accent);">Books: ${state.books[i]}</p>
+      </div>
+    `;
+  });
 }
