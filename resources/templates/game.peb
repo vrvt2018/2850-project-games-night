@@ -1,40 +1,37 @@
 {% extends "base.peb" %}
+{% block title %}{{ title }}{% endblock %}
 {% block content %}
-  <section style="margin-top:1rem;">
-    <h1>{{ title }}</h1>
-    {% if user %}
-      <p>Welcome back, <strong>{{ user }}</strong>! Pick a game from the list below.</p>
-    {% endif %}
+<section>
+  <div style="text-align:center;margin-bottom:3rem;">
+    <h1 style="font-size:2.5rem;margin-bottom:0.5rem;color:white;">Select a Game</h1>
+    <p style="color:#9ca3af;font-size:1.1rem;">Welcome back, <strong>{{ user }}</strong>! Choose a game below to host or join a lobby.</p>
+  </div>
 
-    {% if hasGames %}
-      <div style="display:grid;gap:1rem;">
-        {% for game in games %}
-          <article style="border:1px solid #ddd;padding:1rem;border-radius:10px;background:#fff;">
-            <h2>{{ game.name }}</h2>
-            <p>Players: {{ game.maxPlayers }}</p>
-            <a href="/games/{{ game.name | lower }}" class="button">Open details</a>
-            <form action="/api/games/{{ game.name | lower }}/start" method="post" style="margin-top:0.5rem;">
-              <button type="submit">Start {{ game.name }}</button>
-            </form>
-          </article>
-        {% endfor %}
-      </div>
-    {% elseif game is defined %}
-      <div style="padding:1.2rem;border:1px solid #c1c1c1;border-radius:12px;background:#f7fafc;">
-        <h2>{{ game.name }} ({{ game.maxPlayers }} players)</h2>
-        <p>Game details and live dashboard placeholder.</p>
-        {% if game.name == 'Chess' %}
-          <p>Chess board placeholder: draw grid + pieces here.</p>
-        {% else %}
-          <p>{{ game.name }} session placeholder.</p>
-        {% endif %}
-        <form action="/api/games/{{ game.name | lower }}/start" method="post" style="margin-top:1rem;">
-          <button type="submit">Start this game</button>
-        </form>
-      </div>
-    {% else %}
-      <p>No games are available right now.</p>
-    {% endif %}
-  </section>
+  {% if hasGames %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:2rem;">
+      {% for game in games %}
+        <article class="card game-card" style="display:flex;flex-direction:column;justify-content:space-between;">
+          <div>
+            <h2 style="margin-bottom:0.5rem;color:white;">{{ game.name }}</h2>
+            <p style="color:#9ca3af;margin-bottom:1.5rem;">Players: 1–{{ game.maxPlayers }}</p>
+            {% if game.name == 'Go Fish' %}
+              <p>A classic card-matching game. Ask opponents for cards to collect sets of 4.</p>
+            {% elseif game.name == 'Chess' %}
+              <p>The timeless game of strategy. Checkmate your opponent's king to win.</p>
+            {% endif %}
+          </div>
+          
+          <div style="margin-top:2rem;display:flex;gap:1rem;">
+            <a href="/games/{{ game.name | lower | replace({' ': ''}) }}" class="button" style="text-align:center;width:100%;">Enter Lobby</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card" style="text-align:center;padding:4rem;">
+      <h2 style="color:#d1d5db;">Games are currently offline.</h2>
+      <p style="color:#9ca3af;">Please check back later.</p>
+    </div>
+  {% endif %}
+</section>
 {% endblock %}
-

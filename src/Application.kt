@@ -1,5 +1,6 @@
 package com.example
 
+import com.example.network.ChessSocket
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.pebble.Pebble
@@ -9,8 +10,9 @@ import io.ktor.server.response.*
 import io.ktor.serialization.gson.*
 import io.pebbletemplates.pebble.loader.ClasspathLoader
 import com.example.network.GoFishSocket
-import io.ktor.server.websocket.*
 import io.ktor.server.routing.*
+import io.ktor.server.websocket.*
+import kotlin.time.Duration.Companion.seconds
 
 fun main(args: Array<String>) {
     io.ktor.server.netty.EngineMain.main(args)
@@ -22,10 +24,20 @@ fun Application.module() {
     configureRouting()
     configureTemplates()
     configureApi()
-    install(WebSockets)
+    
+    install(WebSockets) {
+        pingPeriod = 15.seconds
+        timeout = 15.seconds
+        maxFrameSize = Long.MAX_VALUE
+        masking = false
+    }
+    
     routing {
         webSocket("/gofish") {
             GoFishSocket.handle(this)
+        }
+        webSocket("/chess") {
+            ChessSocket.handle(this)
         }
     }
 }
@@ -38,9 +50,6 @@ fun Application.configureStatusPages() {
         }
         status(HttpStatusCode.NotFound) { call, _ ->
             call.respondText("Page not found", status = HttpStatusCode.NotFound)
-        }
-        status(HttpStatusCode.Unauthorized) { call, _ ->
-            call.respondRedirect("/")
         }
     }
 }

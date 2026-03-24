@@ -1,32 +1,34 @@
-{%  extends "base.peb" %}
-    {% block content %}
-    <section style="display:flex;justify-content:center;">
-      <div style="background:#f4f4f8;padding:2rem;border-radius:12px;max-width:420px;width:100%;box-shadow:0 0 15px rgba(0,0,0,0.08);">
-        <h1 style="margin-top:0;">Login to Games Night</h1>
-        <p>Enter your account and join a multiplayer game in seconds.</p>
+{% extends "base.peb" %}
+{% block title %}Login - Games Night{% endblock %}
+{% block content %}
+<section style="display:flex;justify-content:center;">
+  <div class="card" style="max-width:420px;width:100%;">
+    <h1 style="margin-top:0;font-size:1.8rem;">Login to Games Night</h1>
+    <p style="color:#9ca3af;margin-bottom:2rem;">Enter your account and join a multiplayer game in seconds.</p>
 
-        <form action="/login" method="post" style="display:grid;gap:0.8rem;">
-          <label for="username">Username</label>
-          <input type="text" id="username" name="username" required placeholder="your-username">
+    <form action="/login" method="post" style="display:grid;gap:0.8rem;">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" required placeholder="your-username" autocomplete="username">
 
-          <label for="password">Password</label>
-          <input type="password" id="password" name="password" required placeholder="••••••••">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required placeholder="••••••••" autocomplete="current-password">
 
-          <button type="submit" style="margin-top:0.6rem;">Login</button>
-        </form>
+      <button type="submit" style="margin-top:1rem;width:100%;">Login</button>
+    </form>
 
-        {% if error is defined and error %}
-          <div style="margin-top:0.8rem;padding:0.8rem;border:1px solid #f44336;border-radius:8px;background:#ffeaea;color:#900;">
-            {% if error == 'invalid_credentials' %}
-              Invalid username or password. Please try again.
-            {% else %}
-              An error occurred. Please try again.
-            {% endif %}
-          </div>
+    {% if error is defined and error %}
+      <div class="error-msg" style="margin-top:1.5rem;" role="alert">
+        {% if error == 'invalid_credentials' %}
+          Invalid username or password. Please try again.
+        {% else %}
+          An error occurred. Please try again.
         {% endif %}
-
-        <p style="margin-top:1rem;font-size:0.9rem;">New here? <a href="/signup">Create an account</a> and start playing.</p>
       </div>
-    </section>
-{% endblock %}
+    {% endif %}
 
+    <p style="margin-top:2rem;font-size:0.9rem;text-align:center;">
+      New here? <a href="/signup" style="color:var(--gn-primary)">Create an account</a> and start playing.
+    </p>
+  </div>
+</section>
+{% endblock %}
