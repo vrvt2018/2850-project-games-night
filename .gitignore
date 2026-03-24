@@ -34,3 +34,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# Ignore all files in docs directory
+docs/*

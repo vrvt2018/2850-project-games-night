@@ -1,61 +1,45 @@
-# ktor-sample
+# COMP2850: Games Night
+A fully functional multiplayer game center built with Kotlin, Ktor, and WebSockets.
 
-This project was created using the [Ktor Project Generator](https://start.ktor.io).
+## 🚀 Overview
+**Games Night** is an online web application where users can create secure accounts, host game lobbies, and play real-time multiplayer board and card games natively in their browser. 
 
-Here are some useful links to get you started:
+The application currently supports:
+1. **Chess** (2 Players) - Fully implemented strict rules including check, checkmate, castling, pawn promotion, and en-passant tracking!
+2. **Go Fish** (2+ Players) - Track books, draw from the pond, and intelligently query opponents for matching cards.
 
-- [Ktor Documentation](https://ktor.io/docs/home.html)
-- [Ktor GitHub page](https://github.com/ktorio/ktor)
-- The [Ktor Slack chat](https://app.slack.com/client/T09229ZC6/C0A974TJ9). You'll need to [request an invite](https://surveys.jetbrains.com/s3/kotlin-slack-sign-up) to join.
+## 🌟 Key Features
+* **Real-time WebSockets**: Every move, card draw, and lobby join is instantly broadcasted to clients in the exact same room, ensuring low-latency synchronization without page refreshes.
+* **Complex Backend Engines**: The server handles all game logic deterministically. For example, `Chess.kt` calculates pseudo-legal geometry, dry-runs moves on temporary boards to strictly block moves resulting in checks, and evaluates edge-cases like Checkmate and Stalemate.
+* **Modern Custom UI**: Powered by Pebble templates and PicoCSS, augmented with our own `style.css` containing dark-mode aesthetics, responsive card containers, and vector UI elements (Lichess SVGs).
+* **Secure Authentication**: User passwords are mathematically transformed using cryptographically secure `HMAC-SHA256` hashing and a static secret salt. Session identifiers are strictly decoupled from easily predictable attributes by utilizing `UUID.randomUUID()` values stored in secure cookies (`Max-Age`, `Path=/`).
+* **Game History Leaderboard**: A persistence system mapped via Jetbrains Exposed ORM tracking every win and draw across users, calculating Global Rankings.
 
-## Features
+## 🛠️ Tech Stack
+- **Backend**: Kotlin, Ktor 3.0, Amper Build Tool
+- **Frontend**: HTML5, Vanilla JavaScript, CSS3, PicoCSS, Pebble Templates
+- **Database**: H2 (Development & Testing) / PostgreSQL (Production ready), Exposed JDBC ORM
+- **Testing**: JUnit 5, Amper test runner
 
-Here's a list of features included in this project:
-
-| Name                                               | Description                                                 |
-| ----------------------------------------------------|------------------------------------------------------------- |
-| [Routing](https://start.ktor.io/p/routing-default) | Allows to define structured routes and associated handlers. |
-
-## Building & Running
-
-To build or run the project, use one of the following tasks:
-
-| Task            | Description      |
-| -----------------|------------------ |
-| `./amper test`  | Run the tests    |
-| `./amper build` | Build everything |
-| `./amper run`   | Run the server   |
-
-If the server starts successfully, you'll see the following output:
-
-```
-2024-12-04 14:32:45.584 [main] INFO  Application - Application started in 0.303 seconds.
-2024-12-04 14:32:45.682 [main] INFO  Application - Responding at http://0.0.0.0:8080
-```
-
-## Database UI (H2)
-
-This project persists data in H2 by default. To inspect data:
-
-1. Run the app once so the DB file exists.
-2. Start H2 console:
+## 🏃 Building & Running
+To run the server locally on your machine, simply execute the following in your terminal:
 
 ```bash
-java -cp ~/.m2/repository/com/h2database/h2/<version>/h2-<version>.jar org.h2.tools.Server -web -tcp -ifNotExists
+# Run the Ktor Server natively (Port 8080)
+./amper run
+
+# Execute the Backend Logic Unit Tests
+./amper test
 ```
 
-3. Open `http://localhost:8082`, connect with:
-   - JDBC URL: `jdbc:h2:./build/db/games-night;MODE=PostgreSQL;DB_CLOSE_DELAY=-1`
-   - User: `sa`
-   - Password: ``
+Once running, open your browser and navigate to **[http://localhost:8080](http://localhost:8080)**.
 
-4. Execute SQL:
+## 🗄️ Database Inspection (H2)
+During development, we persist data to a local `.mv.db` file located in `./build/db/games-night`.
+To inspect the database:
+1. Start the server once to generate the DB file.
+2. Stop the server (`Ctrl+C`).
+3. View the SQLite/H2 data directly using your IDE's Database tool or the native H2 Console by connecting to JDBC URL `jdbc:h2:./build/db/games-night;MODE=PostgreSQL`.
 
-```sql
-SELECT * FROM users;
-SELECT * FROM games;
-SELECT * FROM sessions;
-```
-
-Alternatively, point `DB_URL` to Postgres and inspect with PgAdmin/DBeaver.
-
+---
+*Created as part of the COMP2850 Assessment.*
