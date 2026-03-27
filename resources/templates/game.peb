@@ -22,7 +22,11 @@
           </div>
           
           <div style="margin-top:2rem;display:flex;gap:1rem;">
-            <a href="/games/{{ game.name | lower | replace({' ': ''}) }}" class="button" style="text-align:center;width:100%;">Enter Lobby</a>
+            {% if game.name == 'Go Fish' %}
+              <a href="/games/gofish" class="button" style="text-align:center;width:100%;">Enter Lobby</a>
+            {% elseif game.name == 'Chess' %}
+              <a href="/games/chess" class="button" style="text-align:center;width:100%;">Enter Lobby</a>
+            {% endif %}
           </div>
         </article>
       {% endfor %}

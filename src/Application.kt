@@ -1,6 +1,9 @@
+// AI-assisted: Ktor plugin configuration and WebSocket setup (Gemini)
+// Entry point: initialises DB, routing, templates, and WebSocket endpoints
 package com.example
 
 import com.example.network.ChessSocket
+import com.example.network.GoFishSocket
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.pebble.Pebble
@@ -9,7 +12,6 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.serialization.gson.*
 import io.pebbletemplates.pebble.loader.ClasspathLoader
-import com.example.network.GoFishSocket
 import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import kotlin.time.Duration.Companion.seconds

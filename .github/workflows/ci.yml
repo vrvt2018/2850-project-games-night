@@ -1,31 +1,26 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "main", "dev" ]
+    branches: [ "main" ]
 
 jobs:
-  build_and_test:
+  build-and-test:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
-
-      - name: Setup Amper
-        run: |
-          chmod +x ./amper
-          ./amper --help
-
-      - name: Build Project
-        run: ./amper build
-
-      - name: Run Tests
-        run: ./amper test
+    - uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'corretto'
+        
+    - name: Run Backend Tests
+      run: ./amper test
+      
+    - name: Run Backend Build
+      run: ./amper build
