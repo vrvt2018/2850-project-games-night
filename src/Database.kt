@@ -68,7 +68,7 @@ object GameHistory : Table("game_history") {
 fun initDatabase(testDbUrl: String? = null) {
     val dbUrl = testDbUrl ?: System.getenv("DB_URL") ?: "jdbc:h2:./build/db/games-night;MODE=PostgreSQL;DB_CLOSE_DELAY=-1"
     val dbUser = System.getenv("DB_USER") ?: "sa"
-    val dbPassword = System.getenv("DB_PASSWORD") ?: ""
+    val dbPassword = System.getenv("DB_PASSWORD") ?: "123456"
 
     Database.connect(
         dbUrl,
