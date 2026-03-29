@@ -1,3 +1,5 @@
+// AI-assisted: Move validation dry-run approach, castling rights tracking, and checkmate detection (Gemini)
+// Server-side chess engine: validates moves, detects check/checkmate/stalemate
 package com.example.games
 
 /**

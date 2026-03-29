@@ -1,151 +1,146 @@
+// AI-assisted: Game engine structure, book-tracking logic, and state serialisation (Gemini)
+// Go Fish game logic: manages hands, card asking, book collection, and turn flow
 package com.example.games
 
 /**
- * Go Fish card game implementation for 2–4 players.
+ * Go Fish card game engine.
  *
- * Rules:
- * - Each player is dealt 7 cards at the start.
- * - On their turn, a player asks another player for cards of a specific rank.
- * - If the asked player has matching cards, they hand them all over (player goes again if successful).
- * - If not, the current player draws a card ("Go Fish!") and the turn passes.
- * - When a player collects all 4 cards of a rank, they score a "book".
- * - The game ends when the deck is empty and all hands are empty.
- * - The winner has the most books.
+ * Supports 2-4 players. Players ask each other for cards of a particular rank.
+ * When a player collects all 4 cards of a rank, they form a "book".
+ * The game ends when all 13 books have been formed or the deck is empty and no
+ * player can make a move.
  */
-class GoFish(name: String = "Go Fish") : Game(name, 4) {
+class GoFish : Game("Go Fish", maxPlayers = 4) {
 
-    private val deck = Deck().cards.toMutableList()
-    private val hands = mutableListOf<MutableList<Card>>()
-    private val bookCounts = mutableListOf<Int>()
-    private var turn = 0
-    /** Whether the current player got cards from their last ASK (they get another turn). */
-    var lastAskSuccess: Boolean = false
-        private set
+    private val deck = Deck()
+    private val drawPile = mutableListOf<Card>()
+    private val hands = mutableListOf<MutableList<Card>>()    // hands[playerIndex]
+    private val books = mutableListOf<Int>()                   // books[playerIndex] = count
+    private var turn: Int = 0
+    private var winner: Int = -2  // -2 = not over, -1 = draw
 
-    init {
-        deck.shuffle()
-    }
-
-    /**
-     * Adds a player slot to the game.
-     * @return false if the game is already at max capacity.
-     */
     override fun addPlayer(): Boolean {
         if (numPlayers >= maxPlayers) return false
-        hands.add(mutableListOf())
-        bookCounts.add(0)
         numPlayers++
         return true
     }
 
-    /**
-     * Deals 7 cards to each player and marks the game as started.
-     */
     override fun startGame() {
-        repeat(7) {
-            hands.forEach { hand ->
-                if (deck.isNotEmpty()) hand.add(deck.removeAt(0))
+        // Shuffle and create draw pile
+        drawPile.clear()
+        drawPile.addAll(deck.cards.toList().shuffled())
+
+        // Initialize hands and books
+        hands.clear()
+        books.clear()
+        val cardsPerPlayer = if (numPlayers <= 3) 7 else 5
+        for (i in 0 until numPlayers) {
+            val hand = mutableListOf<Card>()
+            repeat(cardsPerPlayer) {
+                if (drawPile.isNotEmpty()) hand.add(drawPile.removeFirst())
             }
+            hands.add(hand)
+            books.add(0)
         }
+
+        turn = 0
+        winner = -2
         started = true
     }
 
-    /** Returns the index of the player whose turn it currently is. */
-    fun currentPlayer(): Int = turn
+    /**
+     * Current player asks [targetPlayer] for cards of [rank].
+     * @return true if the target had matching cards (player gets another turn).
+     */
+    fun askForCard(targetPlayer: Int, rank: String): Boolean {
+        if (targetPlayer < 0 || targetPlayer >= numPlayers || targetPlayer == turn) return false
 
-    /** Advances to the next player's turn. */
-    fun nextTurn() {
-        turn = (turn + 1) % numPlayers
+        val targetHand = hands[targetPlayer]
+        val matching = targetHand.filter { it.rankString() == rank }
+
+        return if (matching.isNotEmpty()) {
+            // Transfer cards from target to current player
+            targetHand.removeAll(matching)
+            hands[turn].addAll(matching)
+            checkBooks(turn)
+            true // Player gets another turn
+        } else {
+            // "Go Fish" - draw a card from the pile
+            if (drawPile.isNotEmpty()) {
+                hands[turn].add(drawPile.removeFirst())
+                checkBooks(turn)
+            }
+            false // Turn ends
+        }
     }
 
     /**
-     * The current player [from] asks player [to] for all cards with a given [rankString].
-     * @param from Index of asking player.
-     * @param to   Index of player being asked.
-     * @param rankString Rank description (e.g. "A", "7", "Queen").
-     * @return true if any cards were received; false if "Go Fish".
+     * Advances to the next player's turn. Called after a failed ask (Go Fish).
      */
-    fun ask(from: Int, to: Int, rankString: String): Boolean {
-        require(from != to) { "Cannot ask yourself" }
-        require(from in hands.indices && to in hands.indices) { "Invalid player index" }
+    fun endTurn() {
+        // Skip players with empty hands (if draw pile also empty)
+        var attempts = 0
+        do {
+            turn = (turn + 1) % numPlayers
+            attempts++
+        } while (hands[turn].isEmpty() && drawPile.isEmpty() && attempts < numPlayers)
 
-        val targetHand = hands[to]
-        val matches = targetHand.filter { it.rankString() == rankString }
-        return if (matches.isNotEmpty()) {
-            hands[from].addAll(matches)
-            targetHand.removeAll(matches.toSet())
-            checkBooks(from)
-            lastAskSuccess = true
-            true
-        } else {
-            goFish(from)
-            lastAskSuccess = false
-            false
-        }
+        checkGameOver()
     }
 
-    /** Draws a card from the deck for [player] and checks for a book. */
-    private fun goFish(player: Int) {
-        if (deck.isNotEmpty()) {
-            hands[player].add(deck.removeAt(0))
-        }
-        checkBooks(player)
-    }
-
-    /** Checks if [player] has collected all 4 cards of any rank and scores books accordingly. */
-    private fun checkBooks(player: Int) {
-        val hand = hands[player]
-        val groups = hand.groupBy { it.rankString() }
-        for ((_, cards) in groups) {
+    /**
+     * Checks if the player at [playerIndex] has completed any books (4 of a rank).
+     */
+    private fun checkBooks(playerIndex: Int) {
+        val hand = hands[playerIndex]
+        val rankGroups = hand.groupBy { it.rankString() }
+        for ((rank, cards) in rankGroups) {
             if (cards.size == 4) {
-                hand.removeAll(cards.toSet())
-                bookCounts[player]++
+                hand.removeAll { it.rankString() == rank }
+                books[playerIndex]++
             }
         }
     }
 
-    /** Returns the cards in [player]'s hand as image URLs. */
-    fun getHandUrls(player: Int): List<String> = hands[player].map { it.imageUrl() }
-
-    /** Returns the cards in [player]'s hand as rank strings (for UI). */
-    fun getHandRanks(player: Int): List<String> = hands[player].map { it.rankString() }
-
-    /** Returns the number of books scored by [player]. */
-    fun getBooks(player: Int): Int = bookCounts.getOrElse(player) { 0 }
-
-    /** Returns the number of cards remaining in [player]'s hand. */
-    fun getHandSize(player: Int): Int = hands.getOrElse(player) { emptyList<Card>() }.size
-
-    /** Returns the number of cards left in the deck. */
-    fun deckSize(): Int = deck.size
-
-    /**
-     * The game is over when the deck is empty and no player has any cards left.
-     */
-    override fun isGameOver(): Boolean = deck.isEmpty() && hands.all { it.isEmpty() }
-
-    /**
-     * Returns the index of the player with the most books.
-     * Returns -1 on a tie (multiple players tied for first).
-     */
-    override fun getWinner(): Int {
-        val maxBooks = bookCounts.maxOrNull() ?: 0
-        val winners = bookCounts.indices.filter { bookCounts[it] == maxBooks }
-        return if (winners.size == 1) winners.first() else -1
+    private fun checkGameOver() {
+        val totalBooks = books.sum()
+        if (totalBooks >= 13) {
+            // All books formed
+            winner = books.indexOf(books.max())
+            return
+        }
+        // Check if all hands are empty and draw pile is empty
+        if (drawPile.isEmpty() && hands.all { it.isEmpty() }) {
+            winner = if (books.max() > 0) books.indexOf(books.max()) else -1
+        }
     }
 
-    /**
-     * Returns a sanitised game state map for [playerIndex].
-     * The player's own hand is shown fully; other players only show card count.
-     */
-    override fun getState(playerIndex: Int): Map<String, Any?> = mapOf(
-        "turn" to turn,
-        "deckSize" to deck.size,
-        "myHand" to if (playerIndex >= 0) getHandUrls(playerIndex) else emptyList<String>(),
-        "myHandRanks" to if (playerIndex >= 0) getHandRanks(playerIndex) else emptyList<String>(),
-        "books" to bookCounts.toList(),
-        "handSizes" to hands.map { it.size },
-        "gameOver" to isGameOver(),
-        "winner" to if (isGameOver()) getWinner() else null
-    )
+    fun currentPlayer(): Int = turn
+
+    override fun isGameOver(): Boolean = winner != -2
+
+    override fun getWinner(): Int = winner
+
+    override fun getState(playerIndex: Int): Map<String, Any?> {
+        val myHand = if (playerIndex in 0 until numPlayers) {
+            hands[playerIndex].map { it.imageUrl() }
+        } else emptyList()
+
+        val myHandRanks = if (playerIndex in 0 until numPlayers) {
+            hands[playerIndex].map { it.rankString() }
+        } else emptyList()
+
+        return mapOf(
+            "turn" to turn,
+            "myHand" to myHand,
+            "myHandRanks" to myHandRanks,
+            "handSizes" to hands.map { it.size },
+            "books" to books.toList(),
+            "deckSize" to drawPile.size,
+            "gameOver" to isGameOver(),
+            "winner" to if (isGameOver()) winner else null,
+            "playerIndex" to playerIndex,
+            "numPlayers" to numPlayers
+        )
+    }
 }

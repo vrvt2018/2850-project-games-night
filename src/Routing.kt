@@ -1,3 +1,5 @@
+// AI-assisted: Route definitions, session cookie handling, and form validation (Gemini)
+// Defines all HTTP GET/POST routes for pages, auth, and API endpoints
 package com.example
 
 import io.ktor.http.*
@@ -58,6 +60,7 @@ fun Application.configureRouting() {
             call.respondTemplate("leaderboard.peb", mapOf("title" to "Leaderboard", "user" to user, "stats" to stats))
         }
 
+
         // Dedicated game pages
         get("/games/gofish") {
             val user = call.request.cookies["AUTH_TOKEN"]?.let { getUsernameByToken(it) } ?: return@get call.respondRedirect("/")
@@ -72,12 +75,20 @@ fun Application.configureRouting() {
         // Catch-all game handler for generic game page rendering
         get("/games/{name}") {
             val name = call.parameters["name"] ?: return@get call.respondText("game name required", status = HttpStatusCode.BadRequest)
+            
+            // Redirect dedicated games to their lobbies
+            if (name.lowercase() == "gofish") return@get call.respondRedirect("/games/gofish")
+            if (name.lowercase() == "chess") return@get call.respondRedirect("/games/chess")
+
             val game = findGameByName(name) ?: return@get call.respondText("game not found", status = HttpStatusCode.NotFound)
             val user = call.request.cookies["AUTH_TOKEN"]?.let { getUsernameByToken(it) }
+            val allGames = findAllGames().map { mapOf("name" to it.name, "maxPlayers" to it.maxPlayers) }
+            
             val model = mutableMapOf<String, Any>(
                 "title" to game.name,
                 "game" to mapOf("name" to game.name, "maxPlayers" to game.maxPlayers),
-                "hasGames" to false
+                "games" to allGames,
+                "hasGames" to allGames.isNotEmpty()
             )
             if (user != null) model["user"] = user
             call.respondTemplate("game.peb", model = model)

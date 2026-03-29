@@ -1,3 +1,5 @@
+// Go Fish Frontend - WebSocket client
+// AI-assisted: UI rendering logic and WebSocket message handling (Gemini 2.5 Pro)
 const ws = new WebSocket(`ws://${location.host}/gofish`);
 let myPlayerIndex = -1;
 let isHost = false;
@@ -28,7 +30,6 @@ ws.onmessage = (e) => {
       break;
 
     case "PLAYER_UPDATE":
-      // We only care about this before game starts
       if (document.getElementById("playerCount")) {
         document.getElementById("playerCount").innerText = msg.count;
         if (isHost && msg.count >= 2) {
@@ -57,7 +58,7 @@ ws.onmessage = (e) => {
     case "GAME_END":
       elGameArea.style.display = "none";
       elGameOver.style.display = "block";
-      const winnerText = msg.winner === myPlayerIndex ? "You Win!" : 
+      const winnerText = msg.winner === myPlayerIndex ? "You Win!" :
                          (msg.winner === -1 ? "It's a tie!" : `Player ${msg.winner + 1} Wins!`);
       document.getElementById("winnerText").innerText = winnerText;
       break;
@@ -100,7 +101,7 @@ function askForCard() {
   const target = document.getElementById("askPlayerSelect").value;
   const rank = document.getElementById("askRankSelect").value;
   if (target === "" || rank === "") return;
-  
+
   ws.send(JSON.stringify({
     type: "ASK",
     target: parseInt(target),
@@ -122,7 +123,6 @@ function showActionResult(success) {
   } else {
     resEl.style.color = "#fca5a5";
     resEl.innerText = "Go Fish! You drew a card.";
-    // Replaced asking UI with end turn button
     document.getElementById("btnAsk").disabled = true;
     document.getElementById("btnEndTurn").style.display = "inline-block";
   }
@@ -131,7 +131,7 @@ function showActionResult(success) {
 // State Rendering
 function updateGameState(state) {
   const isMyTurn = state.turn === myPlayerIndex;
-  
+
   // Update turn alert
   const alertEl = document.getElementById("turnAlert");
   const turnTextEl = document.getElementById("turnText");
@@ -152,7 +152,7 @@ function updateGameState(state) {
     actionArea.style.display = "block";
     document.getElementById("btnAsk").disabled = false;
     document.getElementById("btnEndTurn").style.display = "none";
-    
+
     // Clear old result unless we just had an ask result
     if (state.type !== "ASK_RESULT") {
       document.getElementById("actionResult").style.display = "none";
@@ -193,7 +193,7 @@ function updateGameState(state) {
     if (i === myPlayerIndex) return;
     const isTheirTurn = state.turn === i;
     const activeClass = isTheirTurn ? "active-turn" : "";
-    
+
     oppGrid.innerHTML += `
       <div class="player-box ${activeClass}">
         <h4 style="margin:0 0 0.5rem;">Player ${i + 1}</h4>

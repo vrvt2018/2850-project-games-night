@@ -1,3 +1,5 @@
+// AI-assisted: WebSocket handler structure and JSON serialisation (Gemini)
+// Manages Chess lobby rooms and relays moves between two players via WebSocket
 package com.example.network
 
 import com.example.games.Chess

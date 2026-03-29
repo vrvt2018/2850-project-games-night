@@ -1,3 +1,5 @@
+// AI-assisted: Exposed ORM table definitions, HMAC password hashing, and leaderboard queries (Gemini)
+// Handles user accounts, sessions, game catalogue, and leaderboard persistence
 package com.example
 
 import com.example.games.Game
@@ -63,10 +65,10 @@ object GameHistory : Table("game_history") {
  * Initialises the database connection and creates any missing tables.
  * Connection parameters are read from environment variables (defaults to H2 in dev mode).
  */
-fun initDatabase() {
-    val dbUrl = System.getenv("DB_URL") ?: "jdbc:h2:./build/db/games-night;MODE=PostgreSQL;DB_CLOSE_DELAY=-1"
+fun initDatabase(testDbUrl: String? = null) {
+    val dbUrl = testDbUrl ?: System.getenv("DB_URL") ?: "jdbc:h2:./build/db/games-night;MODE=PostgreSQL;DB_CLOSE_DELAY=-1"
     val dbUser = System.getenv("DB_USER") ?: "sa"
-    val dbPassword = System.getenv("DB_PASSWORD") ?: ""
+    val dbPassword = System.getenv("DB_PASSWORD") ?: "123456"
 
     Database.connect(
         dbUrl,
@@ -81,11 +83,15 @@ fun initDatabase() {
 
     transaction {
         create(Users, Sessions, Games, GameHistory)
+        println("Database tables checked/created.")
 
         // Seed the games catalogue if empty
         if (Games.selectAll().empty()) {
+            println("Seeding games catalogue...")
             Games.insert { it[name] = "Go Fish"; it[maxPlayers] = 4 }
             Games.insert { it[name] = "Chess"; it[maxPlayers] = 2 }
+        } else {
+            println("Games catalogue already contains: ${findAllGames().map { it.name }.joinToString(", ")}")
         }
     }
 }

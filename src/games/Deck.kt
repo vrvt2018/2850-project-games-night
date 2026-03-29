@@ -1,3 +1,5 @@
+// AI-assisted: Card data model and CDN image URL generation (Gemini)
+// Data classes for Card, Suit, and Deck used by Go Fish
 package com.example.games
 
 /**
@@ -14,12 +16,12 @@ enum class PictureCard { Jack, Queen, King }
  * Represents a single playing card.
  *
  * @param suit The suit of the card (Hearts, Diamonds, Spades, Clubs).
- * @param _rank Internal integer rank (1–13). 1=Ace, 11=Jack, 12=Queen, 13=King.
+ * @param _rank Internal integer rank (1-13). 1=Ace, 11=Jack, 12=Queen, 13=King.
  */
 class Card(val suit: Suit, private val _rank: Int) {
 
     /**
-     * The rank of this card: an Int (1–10) for numbered cards, or a [PictureCard] for face cards.
+     * The rank of this card: an Int (1-10) for numbered cards, or a [PictureCard] for face cards.
      * Ace is represented as 1.
      */
     val rank: Any
@@ -37,8 +39,7 @@ class Card(val suit: Suit, private val _rank: Int) {
     }
 
     /**
-     * Returns the URL path to this card's image asset.
-     * Expects card images at /resources/assets/cards/<rank>_of_<suit>.svg
+     * Returns the URL to this card's image asset from a reliable CDN.
      */
     fun imageUrl(): String {
         val rankPart = when (_rank) {
@@ -48,7 +49,7 @@ class Card(val suit: Suit, private val _rank: Int) {
             13 -> "king"
             else -> _rank.toString()
         }
-        return "/resources/assets/cards/${rankPart}_of_${suit.name.lowercase()}.svg"
+        return "https://raw.githubusercontent.com/hayeah/playing-cards-assets/master/png/${rankPart}_of_${suit.name.lowercase()}.png"
     }
 
     override fun toString(): String = "${rankString()} of ${suit.name}"

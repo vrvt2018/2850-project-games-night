@@ -13,11 +13,11 @@ dependencies:
   - $ktor.server.contentNegotiation
   - $ktor.serialization.gson
   - $ktor.server.websockets
-  - org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0
+  - org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1
   - org.jetbrains.exposed:exposed-core:0.41.1
   - org.jetbrains.exposed:exposed-dao:0.41.1
   - org.jetbrains.exposed:exposed-jdbc:0.41.1
   - org.postgresql:postgresql:42.6.0
-  - com.h2database:h2:2.1.214
+  - com.h2database:h2:2.2.224
   - $ktor.server.configYaml: runtime-only
   - ch.qos.logback:logback-classic:1.5.22: runtime-only
