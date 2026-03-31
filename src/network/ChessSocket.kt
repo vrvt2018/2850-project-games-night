@@ -3,6 +3,8 @@
 package com.example.network
 
 import com.example.games.Chess
+import com.example.games.Game
+//import io.ktor.network.sockets.Socket
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.serialization.json.*
@@ -31,22 +33,7 @@ import java.util.concurrent.ConcurrentHashMap
  *   { "type": "MOVE_INVALID" }
  *   { "type": "GAME_END", "winner": 0, "reason": "capture" }
  */
-object ChessSocket {
-
-    /** A connected player in a room. */
-    data class Player(
-        val id: String,
-        val session: DefaultWebSocketServerSession,
-        val playerIndex: Int   // 0 = White, 1 = Black
-    )
-
-    /** A room holding up to 2 players and a Chess game instance. */
-    data class Room(
-        val id: String,
-        val players: MutableList<Player> = mutableListOf(),
-        var game: Chess? = null,
-        var started: Boolean = false
-    )
+object ChessSocket : Socket() {
 
     /** Thread-safe room registry. */
     private val rooms = ConcurrentHashMap<String, Room>()
@@ -55,7 +42,7 @@ object ChessSocket {
      * Entry point for all WebSocket connections to /chess.
      * Loops over incoming frames and dispatches to the appropriate handler.
      */
-    suspend fun handle(session: DefaultWebSocketServerSession) {
+    override suspend fun handle(session: DefaultWebSocketServerSession) {
         var player: Player? = null
         var room: Room? = null
 
@@ -103,7 +90,7 @@ object ChessSocket {
                         if (p.playerIndex != 0 || r.players.size < 2 || r.started) continue
                         r.started = true
                         val game = Chess()
-                        game.addPlayer(); game.addPlayer()
+                        game.addPlayer(); game.addPlayer() // Add two players
                         game.startGame()
                         r.game = game
                         r.players.forEachIndexed { i, pl ->
@@ -116,6 +103,9 @@ object ChessSocket {
                         val g = r.game ?: continue
                         val p = player ?: continue
                         val from = msg["from"]?.jsonPrimitive?.intOrNull ?: continue
+
+                        if(g !is Chess) throw GameException()
+
                         if (g.currentPlayer() != p.playerIndex) continue
                         val moves = g.legalMovesFrom(from)
                         session.send("""{"type":"LEGAL_MOVES","from":$from,"moves":${moves}}""")
@@ -125,6 +115,10 @@ object ChessSocket {
                         val r = room ?: continue
                         val g = r.game ?: continue
                         val p = player ?: continue
+
+                        // as before...
+                        if (g !is Chess) throw GameException()
+
                         if (g.currentPlayer() != p.playerIndex) continue
                         val from = msg["from"]?.jsonPrimitive?.intOrNull ?: continue
                         val to = msg["to"]?.jsonPrimitive?.intOrNull ?: continue
@@ -173,7 +167,8 @@ object ChessSocket {
      * Builds a JSON state message from the [game] state for player [playerIndex].
      * @param type The "type" field value (e.g. "START" or "STATE").
      */
-    private fun buildState(type: String, game: Chess, playerIndex: Int): String {
+    // askSuccess only required in GoFish
+    override fun buildState(type: String, game: Game, playerIndex: Int, askSuccess: Boolean?): String {
         val state = game.getState(playerIndex)
         return buildString {
             append("""{"type":"$type"""")
@@ -185,6 +180,4 @@ object ChessSocket {
         }
     }
 
-    /** Generates a 4-digit random room ID. */
-    private fun generateRoomId(): String = (1000..9999).random().toString()
 }

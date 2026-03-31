@@ -2,12 +2,14 @@
 // Manages Go Fish lobby rooms and relays card asks between 2-4 players via WebSocket
 package com.example.network
 
+import com.example.games.Game
 import com.example.games.GoFish
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.serialization.json.*
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import com.example.network.Socket.*
 
 /**
  * WebSocket handler for Go Fish.
@@ -29,24 +31,10 @@ import java.util.concurrent.ConcurrentHashMap
  *   { "type": "STATE", ...state... }
  *   { "type": "GAME_END", "winner": N }
  */
-object GoFishSocket {
-
-    data class Player(
-        val id: String,
-        val session: DefaultWebSocketServerSession,
-        val playerIndex: Int
-    )
-
-    data class Room(
-        val id: String,
-        val players: MutableList<Player> = mutableListOf(),
-        var game: GoFish? = null,
-        var started: Boolean = false
-    )
-
+object GoFishSocket : Socket() {
     private val rooms = ConcurrentHashMap<String, Room>()
 
-    suspend fun handle(session: DefaultWebSocketServerSession) {
+    override suspend fun handle(session: DefaultWebSocketServerSession) {
         var player: Player? = null
         var room: Room? = null
 
@@ -60,7 +48,7 @@ object GoFishSocket {
                 when (msg["type"]?.jsonPrimitive?.content) {
 
                     "CREATE" -> {
-                        val roomId = (1000..9999).random().toString()
+                        val roomId = generateRoomId()
                         val p = Player(UUID.randomUUID().toString(), session, 0)
                         val r = Room(roomId)
                         r.players.add(p)
@@ -107,6 +95,12 @@ object GoFishSocket {
                         val r = room ?: continue
                         val g = r.game ?: continue
                         val p = player ?: continue
+
+                        // Ensure that Game is of type GoFish - important as Game is abstract
+                        if (g !is GoFish)
+                            throw Exception("Game error!")
+
+
                         if (g.currentPlayer() != p.playerIndex) continue
                         val target = msg["target"]?.jsonPrimitive?.intOrNull ?: continue
                         val rank = msg["rank"]?.jsonPrimitive?.content ?: continue
@@ -127,6 +121,9 @@ object GoFishSocket {
                         val r = room ?: continue
                         val g = r.game ?: continue
                         val p = player ?: continue
+
+                        if (g !is GoFish) throw Exception("Game error!")
+
                         if (g.currentPlayer() != p.playerIndex) continue
 
                         g.endTurn()
@@ -154,7 +151,7 @@ object GoFishSocket {
         room.players.forEach { it.session.send(msg) }
     }
 
-    private fun buildState(type: String, game: GoFish, playerIndex: Int, askSuccess: Boolean? = null): String {
+    override fun buildState(type: String, game: Game, playerIndex: Int, askSuccess: Boolean?): String {
         val state = game.getState(playerIndex)
         val sb = StringBuilder()
         sb.append("""{"type":"$type"""")
