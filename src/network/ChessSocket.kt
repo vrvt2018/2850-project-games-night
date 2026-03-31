@@ -3,6 +3,8 @@
 package com.example.network
 
 import com.example.games.Chess
+import com.example.games.Game
+//import io.ktor.network.sockets.Socket
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.serialization.json.*
@@ -31,31 +33,12 @@ import java.util.concurrent.ConcurrentHashMap
  *   { "type": "MOVE_INVALID" }
  *   { "type": "GAME_END", "winner": 0, "reason": "capture" }
  */
-object ChessSocket {
-
-    /** A connected player in a room. */
-    data class Player(
-        val id: String,
-        val session: DefaultWebSocketServerSession,
-        val playerIndex: Int   // 0 = White, 1 = Black
-    )
-
-    /** A room holding up to 2 players and a Chess game instance. */
-    data class Room(
-        val id: String,
-        val players: MutableList<Player> = mutableListOf(),
-        var game: Chess? = null,
-        var started: Boolean = false
-    )
-
-    /** Thread-safe room registry. */
-    private val rooms = ConcurrentHashMap<String, Room>()
-
+object ChessSocket : SocketHandler() {
     /**
      * Entry point for all WebSocket connections to /chess.
      * Loops over incoming frames and dispatches to the appropriate handler.
      */
-    suspend fun handle(session: DefaultWebSocketServerSession) {
+    override suspend fun handle(session: DefaultWebSocketServerSession) { // There is an instance of this code running for each client
         var player: Player? = null
         var room: Room? = null
 
@@ -67,34 +50,16 @@ object ChessSocket {
                 }.getOrNull() ?: continue
 
                 when (msg["type"]?.jsonPrimitive?.content) {
-
                     "CREATE" -> {
-                        val roomId = generateRoomId()
-                        val p = Player(UUID.randomUUID().toString(), session, 0)
-                        val r = Room(roomId)
-                        r.players.add(p)
-                        rooms[roomId] = r
+                        val (p, r) = createGame(session)
                         player = p
                         room = r
-                        session.send("""{"type":"ROOM_CREATED","roomId":"$roomId","playerIndex":0}""")
                     }
 
                     "JOIN" -> {
-                        val roomId = msg["roomId"]?.jsonPrimitive?.content ?: continue
-                        val r = rooms[roomId]
-                        when {
-                            r == null -> session.send("""{"type":"JOIN_FAIL","reason":"Room not found"}""")
-                            r.started -> session.send("""{"type":"JOIN_FAIL","reason":"Game already in progress"}""")
-                            r.players.size >= 2 -> session.send("""{"type":"JOIN_FAIL","reason":"Room is full"}""")
-                            else -> {
-                                val p = Player(UUID.randomUUID().toString(), session, 1)
-                                r.players.add(p)
-                                player = p
-                                room = r
-                                session.send("""{"type":"JOIN_OK","playerIndex":1}""")
-                                broadcast(r, """{"type":"PLAYER_UPDATE","count":${r.players.size}}""")
-                            }
-                        }
+                        val (p, r) = joinGame(session, msg, player, room)
+                        player = p
+                        room = r
                     }
 
                     "START" -> {
@@ -102,8 +67,8 @@ object ChessSocket {
                         val p = player ?: continue
                         if (p.playerIndex != 0 || r.players.size < 2 || r.started) continue
                         r.started = true
-                        val game = Chess()
-                        game.addPlayer(); game.addPlayer()
+                        val game = Chess() // This function must be unique to games as it instantiates its own game type
+                        game.addPlayer(); game.addPlayer() // Add two players
                         game.startGame()
                         r.game = game
                         r.players.forEachIndexed { i, pl ->
@@ -116,15 +81,23 @@ object ChessSocket {
                         val g = r.game ?: continue
                         val p = player ?: continue
                         val from = msg["from"]?.jsonPrimitive?.intOrNull ?: continue
+
+                        // Game is abstract so check if it's an instance of chess
+                        if (g !is Chess) throw GameException()
+
                         if (g.currentPlayer() != p.playerIndex) continue
                         val moves = g.legalMovesFrom(from)
-                        session.send("""{"type":"LEGAL_MOVES","from":$from,"moves":${moves}}""")
+                        session.send("""{"type":"LEGAL_MOVES","from":$from,"moves":$moves}""")
                     }
 
                     "MOVE" -> {
                         val r = room ?: continue
                         val g = r.game ?: continue
                         val p = player ?: continue
+
+                        // as before...
+                        if (g !is Chess) throw GameException()
+
                         if (g.currentPlayer() != p.playerIndex) continue
                         val from = msg["from"]?.jsonPrimitive?.intOrNull ?: continue
                         val to = msg["to"]?.jsonPrimitive?.intOrNull ?: continue
@@ -153,27 +126,16 @@ object ChessSocket {
                 }
             }
         } finally {
-            // Clean up the room when a player disconnects
-            room?.let { r ->
-                r.players.removeIf { it.id == player?.id }
-                if (r.players.isEmpty()) rooms.remove(r.id)
-                else broadcast(r, """{"type":"PLAYER_UPDATE","count":${r.players.size}}""")
-            }
+            cleanUpRoom(room, player)
         }
-    }
-
-    /**
-     * Broadcasts [msg] to every player in [room].
-     */
-    private suspend fun broadcast(room: Room, msg: String) {
-        room.players.forEach { it.session.send(msg) }
     }
 
     /**
      * Builds a JSON state message from the [game] state for player [playerIndex].
      * @param type The "type" field value (e.g. "START" or "STATE").
      */
-    private fun buildState(type: String, game: Chess, playerIndex: Int): String {
+    override fun buildState(type: String, game: Game, playerIndex: Int, askSuccess: Boolean?): String {
+        // askSuccess only required in GoFish
         val state = game.getState(playerIndex)
         return buildString {
             append("""{"type":"$type"""")
@@ -185,6 +147,4 @@ object ChessSocket {
         }
     }
 
-    /** Generates a 4-digit random room ID. */
-    private fun generateRoomId(): String = (1000..9999).random().toString()
 }
