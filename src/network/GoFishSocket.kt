@@ -32,10 +32,7 @@ import com.example.network.SocketHandler.*
  *   { "type": "GAME_END", "winner": N }
  */
 object GoFishSocket : SocketHandler() {
-    private val rooms = ConcurrentHashMap<String, Room>()
-
-
-    public override suspend fun handle(session: DefaultWebSocketServerSession) {
+    override suspend fun handle(session: DefaultWebSocketServerSession) {
         var player: Player? = null
         var room: Room? = null
 
@@ -121,7 +118,7 @@ object GoFishSocket : SocketHandler() {
                 }
             }
         }
-        finally {}
+        finally {cleanUpRoom(room, player)}
     }
 
     override fun buildState(type: String, game: Game, playerIndex: Int, askSuccess: Boolean?): String {

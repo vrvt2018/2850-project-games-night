@@ -34,17 +34,12 @@ import java.util.concurrent.ConcurrentHashMap
  *   { "type": "GAME_END", "winner": 0, "reason": "capture" }
  */
 object ChessSocket : SocketHandler() {
-
-    /** Thread-safe room registry. */
-    private val rooms = ConcurrentHashMap<String, Room>()
-
     /**
      * Entry point for all WebSocket connections to /chess.
      * Loops over incoming frames and dispatches to the appropriate handler.
      */
-
-    public override suspend fun handle(session: DefaultWebSocketServerSession) {
-        var player: Player? = null // Surely if there's multiple clients or rooms this would be overwritten?
+    override suspend fun handle(session: DefaultWebSocketServerSession) { // There is an instance of this code running for each client
+        var player: Player? = null
         var room: Room? = null
 
         try {
@@ -55,15 +50,14 @@ object ChessSocket : SocketHandler() {
                 }.getOrNull() ?: continue
 
                 when (msg["type"]?.jsonPrimitive?.content) {
-
                     "CREATE" -> {
-                        val (p,r) = createGame(session)
+                        val (p, r) = createGame(session)
                         player = p
                         room = r
                     }
 
                     "JOIN" -> {
-                        val(p,r) = joinGame(session, msg, player, room)
+                        val (p, r) = joinGame(session, msg, player, room)
                         player = p
                         room = r
                     }
@@ -73,7 +67,7 @@ object ChessSocket : SocketHandler() {
                         val p = player ?: continue
                         if (p.playerIndex != 0 || r.players.size < 2 || r.started) continue
                         r.started = true
-                        val game = Chess()
+                        val game = Chess() // This function must be unique to games as it instantiates its own game type
                         game.addPlayer(); game.addPlayer() // Add two players
                         game.startGame()
                         r.game = game
@@ -89,11 +83,11 @@ object ChessSocket : SocketHandler() {
                         val from = msg["from"]?.jsonPrimitive?.intOrNull ?: continue
 
                         // Game is abstract so check if it's an instance of chess
-                        if(g !is Chess) throw GameException()
+                        if (g !is Chess) throw GameException()
 
                         if (g.currentPlayer() != p.playerIndex) continue
                         val moves = g.legalMovesFrom(from)
-                        session.send("""{"type":"LEGAL_MOVES","from":$from,"moves":${moves}}""")
+                        session.send("""{"type":"LEGAL_MOVES","from":$from,"moves":$moves}""")
                     }
 
                     "MOVE" -> {
@@ -131,20 +125,17 @@ object ChessSocket : SocketHandler() {
                     }
                 }
             }
-        } finally { cleanUpRoom(room, player)}
+        } finally {
+            cleanUpRoom(room, player)
+        }
     }
-
-    /**
-     * Broadcasts [msg] to every player in [room].
-     */
-
 
     /**
      * Builds a JSON state message from the [game] state for player [playerIndex].
      * @param type The "type" field value (e.g. "START" or "STATE").
      */
-    // askSuccess only required in GoFish
     override fun buildState(type: String, game: Game, playerIndex: Int, askSuccess: Boolean?): String {
+        // askSuccess only required in GoFish
         val state = game.getState(playerIndex)
         return buildString {
             append("""{"type":"$type"""")
