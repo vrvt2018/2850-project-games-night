@@ -9,7 +9,7 @@ import io.ktor.websocket.*
 import kotlinx.serialization.json.*
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
-import com.example.network.Socket.*
+import com.example.network.SocketHandler.*
 
 /**
  * WebSocket handler for Go Fish.
@@ -31,10 +31,11 @@ import com.example.network.Socket.*
  *   { "type": "STATE", ...state... }
  *   { "type": "GAME_END", "winner": N }
  */
-object GoFishSocket : Socket() {
+object GoFishSocket : SocketHandler() {
     private val rooms = ConcurrentHashMap<String, Room>()
 
-    override suspend fun handle(session: DefaultWebSocketServerSession) {
+
+    public override suspend fun handle(session: DefaultWebSocketServerSession) {
         var player: Player? = null
         var room: Room? = null
 
@@ -46,35 +47,16 @@ object GoFishSocket : Socket() {
                 }.getOrNull() ?: continue
 
                 when (msg["type"]?.jsonPrimitive?.content) {
-
                     "CREATE" -> {
-                        val roomId = generateRoomId()
-                        val p = Player(UUID.randomUUID().toString(), session, 0)
-                        val r = Room(roomId)
-                        r.players.add(p)
-                        rooms[roomId] = r
+                        val (p,r) = createGame(session)
                         player = p
                         room = r
-                        session.send("""{"type":"ROOM_CREATED","roomId":"$roomId","playerIndex":0}""")
                     }
 
                     "JOIN" -> {
-                        val roomId = msg["roomId"]?.jsonPrimitive?.content ?: continue
-                        val r = rooms[roomId]
-                        when {
-                            r == null -> session.send("""{"type":"JOIN_FAIL","reason":"Room not found"}""")
-                            r.started -> session.send("""{"type":"JOIN_FAIL","reason":"Game already in progress"}""")
-                            r.players.size >= 4 -> session.send("""{"type":"JOIN_FAIL","reason":"Room is full"}""")
-                            else -> {
-                                val idx = r.players.size
-                                val p = Player(UUID.randomUUID().toString(), session, idx)
-                                r.players.add(p)
-                                player = p
-                                room = r
-                                session.send("""{"type":"JOIN_OK","playerIndex":$idx}""")
-                                broadcast(r, """{"type":"PLAYER_UPDATE","count":${r.players.size}}""")
-                            }
-                        }
+                        val(p,r) = joinGame(session, msg, player, room)
+                        player = p
+                        room = r
                     }
 
                     "START" -> {
@@ -138,17 +120,8 @@ object GoFishSocket : Socket() {
                     }
                 }
             }
-        } finally {
-            room?.let { r ->
-                r.players.removeIf { it.id == player?.id }
-                if (r.players.isEmpty()) rooms.remove(r.id)
-                else broadcast(r, """{"type":"PLAYER_UPDATE","count":${r.players.size}}""")
-            }
         }
-    }
-
-    private suspend fun broadcast(room: Room, msg: String) {
-        room.players.forEach { it.session.send(msg) }
+        finally {}
     }
 
     override fun buildState(type: String, game: Game, playerIndex: Int, askSuccess: Boolean?): String {

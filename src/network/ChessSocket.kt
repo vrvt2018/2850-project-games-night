@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap
  *   { "type": "MOVE_INVALID" }
  *   { "type": "GAME_END", "winner": 0, "reason": "capture" }
  */
-object ChessSocket : Socket() {
+object ChessSocket : SocketHandler() {
 
     /** Thread-safe room registry. */
     private val rooms = ConcurrentHashMap<String, Room>()
@@ -42,8 +42,9 @@ object ChessSocket : Socket() {
      * Entry point for all WebSocket connections to /chess.
      * Loops over incoming frames and dispatches to the appropriate handler.
      */
-    override suspend fun handle(session: DefaultWebSocketServerSession) {
-        var player: Player? = null
+
+    public override suspend fun handle(session: DefaultWebSocketServerSession) {
+        var player: Player? = null // Surely if there's multiple clients or rooms this would be overwritten?
         var room: Room? = null
 
         try {
@@ -56,32 +57,15 @@ object ChessSocket : Socket() {
                 when (msg["type"]?.jsonPrimitive?.content) {
 
                     "CREATE" -> {
-                        val roomId = generateRoomId()
-                        val p = Player(UUID.randomUUID().toString(), session, 0)
-                        val r = Room(roomId)
-                        r.players.add(p)
-                        rooms[roomId] = r
+                        val (p,r) = createGame(session)
                         player = p
                         room = r
-                        session.send("""{"type":"ROOM_CREATED","roomId":"$roomId","playerIndex":0}""")
                     }
 
                     "JOIN" -> {
-                        val roomId = msg["roomId"]?.jsonPrimitive?.content ?: continue
-                        val r = rooms[roomId]
-                        when {
-                            r == null -> session.send("""{"type":"JOIN_FAIL","reason":"Room not found"}""")
-                            r.started -> session.send("""{"type":"JOIN_FAIL","reason":"Game already in progress"}""")
-                            r.players.size >= 2 -> session.send("""{"type":"JOIN_FAIL","reason":"Room is full"}""")
-                            else -> {
-                                val p = Player(UUID.randomUUID().toString(), session, 1)
-                                r.players.add(p)
-                                player = p
-                                room = r
-                                session.send("""{"type":"JOIN_OK","playerIndex":1}""")
-                                broadcast(r, """{"type":"PLAYER_UPDATE","count":${r.players.size}}""")
-                            }
-                        }
+                        val(p,r) = joinGame(session, msg, player, room)
+                        player = p
+                        room = r
                     }
 
                     "START" -> {
@@ -104,6 +88,7 @@ object ChessSocket : Socket() {
                         val p = player ?: continue
                         val from = msg["from"]?.jsonPrimitive?.intOrNull ?: continue
 
+                        // Game is abstract so check if it's an instance of chess
                         if(g !is Chess) throw GameException()
 
                         if (g.currentPlayer() != p.playerIndex) continue
@@ -146,22 +131,13 @@ object ChessSocket : Socket() {
                     }
                 }
             }
-        } finally {
-            // Clean up the room when a player disconnects
-            room?.let { r ->
-                r.players.removeIf { it.id == player?.id }
-                if (r.players.isEmpty()) rooms.remove(r.id)
-                else broadcast(r, """{"type":"PLAYER_UPDATE","count":${r.players.size}}""")
-            }
-        }
+        } finally { cleanUpRoom(room, player)}
     }
 
     /**
      * Broadcasts [msg] to every player in [room].
      */
-    private suspend fun broadcast(room: Room, msg: String) {
-        room.players.forEach { it.session.send(msg) }
-    }
+
 
     /**
      * Builds a JSON state message from the [game] state for player [playerIndex].
