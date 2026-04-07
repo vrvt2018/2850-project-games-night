@@ -244,7 +244,7 @@ fun deleteSession(sessionToken: String) {
 // Game catalogue
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Lightweight DTO representing a game catalogue entry. */
+/** Lightweight DTO representing a game catalogue entry. */ // Who wrote these comments??
 data class GameInfo(val name: String, val maxPlayers: Int)
 
 /**
