@@ -33,4 +33,5 @@ abstract class Game(val name: String, val maxPlayers: Int = 2) {
      * @param playerIndex The player requesting the state (used to hide opponent cards etc.)
      */
     abstract fun getState(playerIndex: Int = -1): Map<String, Any?>
+    abstract fun buildState(type: String, game: Game, playerIndex: Int): String
 }

@@ -334,4 +334,19 @@ class Chess(name: String = "Chess") : Game(name, 2) {
         if (target != '.' && isWhitePiece(target) == isWhitePiece(piece)) return false
         return isLegalMove(piece, from, to, checkBoard, epTarget)
     }
+
+    // Build the state for networking
+    // Needed in this class because it's unique to the game - could also put in handler
+    override fun buildState(type: String, game: Game, playerIndex: Int): String {
+        // askSuccess only required in GoFish
+        val state = game.getState(playerIndex)
+        return buildString {
+            append("""{"type":"$type"""")
+            append(""","board":"${state["board"]}"""")
+            append(""","turn":${state["turn"]}""")
+            append(""","gameOver":${state["gameOver"]}""")
+            append(""","winner":${state["winner"] ?: "null"}""")
+            append(""","playerIndex":$playerIndex}""")
+        }
+    }
 }

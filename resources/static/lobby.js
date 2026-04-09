@@ -24,8 +24,10 @@ function showWaitingRoom(roomId) {
     elWaitingRoom.style.display = "block";
 }
 
+// TEMPORARILY HARD-CODED FOR CHESS! THIS SHOULUD BE CHANGED AND MOVED TO RESPECTIVE JS FILE
+// ALSO RIGHT NOW DOESN'T WORK.........
 function startGame() {
-    ws.send(JSON.stringify({ type: "START" }));
+    ws.send(JSON.stringify({ type: "START_CHESS" }));
 }
 
 function resign() {

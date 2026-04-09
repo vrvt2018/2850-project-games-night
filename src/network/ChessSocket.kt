@@ -3,14 +3,12 @@
 package com.example.network
 
 import com.example.games.Chess
-import com.example.games.Game
-//import io.ktor.network.sockets.Socket
+// import io.ktor.network.sockets.Socket
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.serialization.json.*
-import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 
+// This is obviously AI-generated.
 /**
  * WebSocket handler for the Chess game.
  *
@@ -33,118 +31,83 @@ import java.util.concurrent.ConcurrentHashMap
  *   { "type": "MOVE_INVALID" }
  *   { "type": "GAME_END", "winner": 0, "reason": "capture" }
  */
-object ChessSocket : SocketHandler() {
+object ChessHandler : GameSocketHandler() {
     /**
      * Entry point for all WebSocket connections to /chess.
      * Loops over incoming frames and dispatches to the appropriate handler.
      */
-    override suspend fun handle(session: DefaultWebSocketServerSession) { // There is an instance of this code running for each client
-        var player: Player? = null
-        var room: Room? = null
 
-        try {
-            for (frame in session.incoming) {
-                if (frame !is Frame.Text) continue
-                val msg = runCatching {
-                    Json.parseToJsonElement(frame.readText()).jsonObject
-                }.getOrNull() ?: continue
+    override suspend fun handle(
+        msg: JsonObject,
+        type: String?,
+        session: DefaultWebSocketServerSession,
+        player: NetworkPlayer?,
+        room: Room?,
+    ) {
+        when (type) {
+            // start class should be encapsulated in generic handler cast i think
+//            "START" -> {
+//                val r = room ?: return
+//                val p = player ?: return
+//                if (p.playerIndex != 0 || r.players.size < 2 || r.started) return
+//                r.started = true
+//                val game = Chess() // This function must be unique to games as it instantiates its own game type
+//                game.addPlayer()
+//                game.addPlayer() // Add two players
+//                game.startGame()
+//                r.game = game
+//                r.players.forEachIndexed { i, pl ->
+//                    pl.session.send(buildState("START", game, i))
+//                }
+//            }
 
-                when (msg["type"]?.jsonPrimitive?.content) {
-                    "CREATE" -> {
-                        val (p, r) = createGame(session)
-                        player = p
-                        room = r
-                    }
+            "CHESS_MOVES" -> {
+                val r = room ?: return
+                val g = r.game ?: return
+                val p = player ?: return
+                val from = msg["from"]?.jsonPrimitive?.intOrNull ?: return
 
-                    "JOIN" -> {
-                        val (p, r) = joinGame(session, msg, player, room)
-                        player = p
-                        room = r
-                    }
+                // Game is abstract so check if it's an instance of chess
+                if (g !is Chess) throw GameException()
 
-                    "START" -> {
-                        val r = room ?: continue
-                        val p = player ?: continue
-                        if (p.playerIndex != 0 || r.players.size < 2 || r.started) continue
-                        r.started = true
-                        val game = Chess() // This function must be unique to games as it instantiates its own game type
-                        game.addPlayer(); game.addPlayer() // Add two players
-                        game.startGame()
-                        r.game = game
-                        r.players.forEachIndexed { i, pl ->
-                            pl.session.send(buildState("START", game, i))
-                        }
-                    }
+                if (g.currentPlayer() != p.playerIndex) return
+                val moves = g.legalMovesFrom(from)
+                session.send("""{"type":"LEGAL_MOVES","from":$from,"moves":$moves}""")
+            }
 
-                    "MOVES" -> {
-                        val r = room ?: continue
-                        val g = r.game ?: continue
-                        val p = player ?: continue
-                        val from = msg["from"]?.jsonPrimitive?.intOrNull ?: continue
+            "CHESS_MOVE" -> {
+                val r = room ?: return
+                val g = r.game ?: return
+                val p = player ?: return
 
-                        // Game is abstract so check if it's an instance of chess
-                        if (g !is Chess) throw GameException()
+                // as before...
+                if (g !is Chess) throw GameException()
 
-                        if (g.currentPlayer() != p.playerIndex) continue
-                        val moves = g.legalMovesFrom(from)
-                        session.send("""{"type":"LEGAL_MOVES","from":$from,"moves":$moves}""")
-                    }
+                if (g.currentPlayer() != p.playerIndex) return
+                val from = msg["from"]?.jsonPrimitive?.intOrNull ?: return
+                val to = msg["to"]?.jsonPrimitive?.intOrNull ?: return
 
-                    "MOVE" -> {
-                        val r = room ?: continue
-                        val g = r.game ?: continue
-                        val p = player ?: continue
+                if (!g.makeMove(from, to)) {
+                    session.send("""{"type":"MOVE_INVALID"}""")
+                    return
+                }
 
-                        // as before...
-                        if (g !is Chess) throw GameException()
-
-                        if (g.currentPlayer() != p.playerIndex) continue
-                        val from = msg["from"]?.jsonPrimitive?.intOrNull ?: continue
-                        val to = msg["to"]?.jsonPrimitive?.intOrNull ?: continue
-
-                        if (!g.makeMove(from, to)) {
-                            session.send("""{"type":"MOVE_INVALID"}""")
-                            continue
-                        }
-
-                        if (g.isGameOver()) {
-                            val winner = g.getWinner()
-                            broadcast(r, """{"type":"GAME_END","winner":$winner,"reason":"capture"}""")
-                        } else {
-                            r.players.forEachIndexed { i, pl ->
-                                pl.session.send(buildState("STATE", g, i))
-                            }
-                        }
-                    }
-
-                    "RESIGN" -> {
-                        val r = room ?: continue
-                        val p = player ?: continue
-                        val winner = 1 - p.playerIndex
-                        broadcast(r, """{"type":"GAME_END","winner":$winner,"reason":"resignation"}""")
+                if (g.isGameOver()) {
+                    val winner = g.getWinner()
+                    broadcast(r, """{"type":"GAME_END","winner":$winner,"reason":"capture"}""")
+                } else {
+                    r.players.forEachIndexed { i, pl ->
+                        pl.session.send(r.game!!.buildState("STATE", g, i))
                     }
                 }
             }
-        } finally {
-            cleanUpRoom(room, player)
+
+            "CHESS_RESIGN" -> {
+                val r = room ?: return
+                val p = player ?: return
+                val winner = 1 - p.playerIndex
+                broadcast(r, """{"type":"GAME_END","winner":$winner,"reason":"resignation"}""")
+            }
         }
     }
-
-    /**
-     * Builds a JSON state message from the [game] state for player [playerIndex].
-     * @param type The "type" field value (e.g. "START" or "STATE").
-     */
-    override fun buildState(type: String, game: Game, playerIndex: Int, askSuccess: Boolean?): String {
-        // askSuccess only required in GoFish
-        val state = game.getState(playerIndex)
-        return buildString {
-            append("""{"type":"$type"""")
-            append(""","board":"${state["board"]}"""")
-            append(""","turn":${state["turn"]}""")
-            append(""","gameOver":${state["gameOver"]}""")
-            append(""","winner":${state["winner"] ?: "null"}""")
-            append(""","playerIndex":$playerIndex}""")
-        }
-    }
-
 }
