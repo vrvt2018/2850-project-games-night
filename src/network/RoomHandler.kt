@@ -1,5 +1,6 @@
 package com.example.network
 
+import com.example.games.Chess
 import com.example.games.Game
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.Frame
@@ -28,18 +29,25 @@ data class Room(
 class GameException : Exception("Game error!") // Thrown when game not recognised - required to ensure that game is correct
 // important because game is abstract and IntelliJ is shouting at me!
 
-// Populate these to add game!
-val GAME_HANDLERS = {
-}
-
 object RoomHandler {
     // Socket handler class must contain list of rooms
     private val rooms: ConcurrentHashMap<String, Room> = ConcurrentHashMap<String, Room>()
 
-    fun createObjectByName(name: String?): Game = Class.forName("com.example." + name?.lowercase()?.capitalize()).newInstance() as Game
+    // fun createObjectByName(name: String?): Game = Class.forName("com.example." + name?.lowercase()?.capitalize()).newInstance() as Game
 
-    // Socket must contain handling code
-    public suspend fun handle(session: DefaultWebSocketServerSession) {
+    fun createGameByName(name: String?): Game? =
+        when (name?.lowercase()) {
+            "chess" -> {
+                Chess()
+            }
+
+            else -> {
+                null
+            }
+        }
+
+    // Handling code - whenever a socket is created it's directed to this subroutine
+    suspend fun handle(session: DefaultWebSocketServerSession) {
         var player: NetworkPlayer? = null // the player in this session
         var room: Room? = null // the room player is in
 
@@ -52,40 +60,45 @@ object RoomHandler {
                     }.getOrNull() ?: continue
                 val type = msg["type"]?.jsonPrimitive?.content
 
-                // Must be handled outside of when statement as
-                if (type?.contains("START") == true) {
+                // Must be handled outside when statement as requires contains function
+                if (type?.contains("START") == true) { // TODO: This doesn't work so add print statement printing after start and stuff
                     val r = room ?: continue
                     val p = player ?: continue
-                    // Ignore if not not host, max capacity, or game started
-                    r.started = true
+                    // Ignore if not host, max capacity, or game started
 
                     // Obtain game string from command
-                    val gameString = type?.substring("START_".length)
+                    val gameString = type.substring("START_".length)
 
+                    // Create instance of game
                     val game =
-                        createObjectByName(gameString) // This function must be unique to games as it instantiates its own game type
+                        createGameByName(gameString) ?: {
+                            throw Exception("Game does not exist!")
+                        } as Game
 
-                    if (p.playerIndex != 0 || r.players.size < game.maxPlayers || r.started) {
-                        continue
-                    } else {
-                        game.addPlayer()
-                        game.addPlayer() // Add two players
+
+                    // The game cannot start if not host, not enough players, or already started
+                    if (p.playerIndex == 0 && r.players.size > game.minPlayers && !r.started) {
+                        r.started = true
+
+                        // I'm not entirely sure why ktlint flags this without "_ ->"
+                        r.players.forEach { _ -> game.addPlayer() }
                         game.startGame()
                         r.game = game
                         r.players.forEachIndexed { i, pl ->
+                            // Part of protocol - START type starts game
                             pl.session.send(game.buildState("START", game, i))
                         }
                     }
                 }
 
                 when (type) {
-                    "CREATE" -> {
+                    "CREATE" -> { // Create new room
                         val (p, r) = createGame(session)
                         player = p
                         room = r
                     }
 
-                    "JOIN" -> {
+                    "JOIN" -> { // Player joins a room
                         val (p, r) = joinGame(session, msg, player, room)
                         player = p
                         room = r
@@ -105,32 +118,12 @@ object RoomHandler {
         }
     }
 
-//    // Socket must contain code to build the state
-//    fun buildState(
-//        type: String,
-//        game: Game,
-//        playerIndex: Int,
-//        askSuccess: Boolean? = null,
-//    ): String {
-//        // askSuccess only required in GoFish
-//        val state = game.getState(playerIndex)
-//        return buildString {
-//            append("""{"type":"$type"""")
-//            append(""","board":"${state["board"]}"""")
-//            append(""","turn":${state["turn"]}""")
-//            append(""","gameOver":${state["gameOver"]}""")
-//            append(""","winner":${state["winner"] ?: "null"}""")
-//            append(""","playerIndex":$playerIndex}""")
-//        }
-//    }
-
-    // Generate room ID
-    fun generateRoomId(): String = (1000..9999).random().toString()
+    // Generate room ID between 0000 and 9999 inclusive
+    fun generateRoomId(): String = (0..9999).random().toString().padStart(4, '0')
 
     // Send message to all clients in room over respective websocket
 
     // Functions createGame, joinGame and cleanUpRoom are for use in respective game sockets
-
     // For use upon receiving "CREATE"
     suspend fun createGame(session: DefaultWebSocketServerSession): Pair<NetworkPlayer, Room> {
         val roomId = generateRoomId()
@@ -160,7 +153,7 @@ object RoomHandler {
                 session.send("""{"type":"JOIN_FAIL","reason":"Game already in progress"}""")
             }
 
-            r.players.size >= 2 -> {
+            r.players.size >= 2 -> { // Currently hardcoded for 2 players urgh
                 session.send("""{"type":"JOIN_FAIL","reason":"Room is full"}""")
             }
 
@@ -172,7 +165,7 @@ object RoomHandler {
                 return p to r
             }
         }
-        return player to room // Otherwise, return normal player and room. Seems like the only way to do this
+        return player to room // Otherwise, return normal player and room. Seems like the only way to do this when statement
     }
 
     // Remove all players from room -> to be used in finally{} statement in match statement

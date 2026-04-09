@@ -34,9 +34,9 @@ fun Application.module() {
     }
     
     routing {
-        webSocket("/gofish") {
-            RoomHandler.handle(this)
-        }
+//        webSocket("/gofish") {
+//            RoomHandler.handle(this)
+//        }
         webSocket("/chess") {
             RoomHandler.handle(this)
         }

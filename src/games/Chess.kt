@@ -19,7 +19,7 @@ package com.example.games
  * Piece key:
  *   K/k = King, Q/q = Queen, R/r = Rook, B/b = Bishop, N/n = Knight, P/p = Pawn
  */
-class Chess(name: String = "Chess") : Game(name, 2) {
+class Chess(name: String = "Chess") : Game(name, 2, 2) {
 
     /** Flat 64-element board. '.' means empty square. */
     private val board: CharArray = CharArray(64) { '.' }
