@@ -19,7 +19,7 @@ package com.example.games
  * Piece key:
  *   K/k = King, Q/q = Queen, R/r = Rook, B/b = Bishop, N/n = Knight, P/p = Pawn
  */
-class Chess(name: String = "Chess") : Game(name, 2) {
+class Chess(name: String = "Chess") : Game(name, 2, 2) {
 
     /** Flat 64-element board. '.' means empty square. */
     private val board: CharArray = CharArray(64) { '.' }
@@ -333,5 +333,20 @@ class Chess(name: String = "Chess") : Game(name, 2) {
         val target = checkBoard[to]
         if (target != '.' && isWhitePiece(target) == isWhitePiece(piece)) return false
         return isLegalMove(piece, from, to, checkBoard, epTarget)
+    }
+
+    // Build the state for networking
+    // Needed in this class because it's unique to the game - could also put in handler
+    override fun buildState(type: String, game: Game, playerIndex: Int): String {
+        // askSuccess only required in GoFish
+        val state = game.getState(playerIndex)
+        return buildString {
+            append("""{"type":"$type"""")
+            append(""","board":"${state["board"]}"""")
+            append(""","turn":${state["turn"]}""")
+            append(""","gameOver":${state["gameOver"]}""")
+            append(""","winner":${state["winner"] ?: "null"}""")
+            append(""","playerIndex":$playerIndex}""")
+        }
     }
 }

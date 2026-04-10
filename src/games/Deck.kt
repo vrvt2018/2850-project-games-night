@@ -60,6 +60,6 @@ class Card(val suit: Suit, private val _rank: Int) {
  * Cards are ordered: Ace through King for each suit (Hearts, Diamonds, Spades, Clubs).
  */
 class Deck {
-    /** All 52 cards in the deck. Shuffle before dealing. */
+    // Deck contains 52 cards, lambda is nice for this
     val cards: Array<Card> = Array(52) { Card(Suit.entries[it / 13], it % 13 + 1) }
 }

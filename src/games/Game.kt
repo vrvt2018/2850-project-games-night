@@ -6,7 +6,7 @@ package com.example.games
  * @param name The display name of the game.
  * @param maxPlayers The maximum number of players allowed in this game.
  */
-abstract class Game(val name: String, val maxPlayers: Int = 2) {
+abstract class Game(val name: String, val maxPlayers: Int = 2, val minPlayers: Int = 2) {
 
     /** Current number of active players in this game instance. */
     var numPlayers: Int = 0
@@ -33,4 +33,7 @@ abstract class Game(val name: String, val maxPlayers: Int = 2) {
      * @param playerIndex The player requesting the state (used to hide opponent cards etc.)
      */
     abstract fun getState(playerIndex: Int = -1): Map<String, Any?>
+
+    // Currently in here for use with networking when porting. Should probably be moved
+    abstract fun buildState(type: String, game: Game, playerIndex: Int): String
 }

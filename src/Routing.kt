@@ -10,13 +10,14 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
+//fun Application.tryAutoRedirect()
+//{
+//
+//}
+
 fun Application.configureRouting() {
     routing {
         staticResources("/resources", "/static")
-
-        // ──────────────────────────────────────────────────────────────────
-        // Pages (Templates)
-        // ──────────────────────────────────────────────────────────────────
 
         get("/") {
             val token = call.request.cookies["AUTH_TOKEN"]
@@ -44,14 +45,20 @@ fun Application.configureRouting() {
 
         get("/games") {
             val user = call.request.cookies["AUTH_TOKEN"]?.let { getUsernameByToken(it) } ?: return@get call.respondRedirect("/")
-            val gamesInfo = findAllGames().map { mapOf("name" to it.name, "maxPlayers" to it.maxPlayers) }
+            val gamesInfo = findAllGames().map {
+                mapOf(
+                    "name" to it.name,
+                    "maxPlayers" to it.maxPlayers,
+                    "url" to "/games/" + it.name.lowercase()
+                    )
+            }
             val model = mapOf(
                 "title" to "Games Catalogue",
                 "games" to gamesInfo,
                 "hasGames" to gamesInfo.isNotEmpty(),
                 "user" to user
             )
-            call.respondTemplate("game.peb", model = model)
+            call.respondTemplate("gamelist.peb", model = model)
         }
 
         get("/leaderboard") {
@@ -61,7 +68,7 @@ fun Application.configureRouting() {
         }
 
 
-        // Dedicated game pages
+        // Pages for each game
         get("/games/gofish") {
             val user = call.request.cookies["AUTH_TOKEN"]?.let { getUsernameByToken(it) } ?: return@get call.respondRedirect("/")
             call.respondTemplate("gofish.peb", mapOf("title" to "Go Fish Lobby", "user" to user))
@@ -72,31 +79,29 @@ fun Application.configureRouting() {
             call.respondTemplate("chess.peb", mapOf("title" to "Chess Lobby", "user" to user))
         }
 
-        // Catch-all game handler for generic game page rendering
+
         get("/games/{name}") {
             val name = call.parameters["name"] ?: return@get call.respondText("game name required", status = HttpStatusCode.BadRequest)
             
-            // Redirect dedicated games to their lobbies
+            // Redirect to game
             if (name.lowercase() == "gofish") return@get call.respondRedirect("/games/gofish")
             if (name.lowercase() == "chess") return@get call.respondRedirect("/games/chess")
 
+
+            // Otherwise, if game not found...
             val game = findGameByName(name) ?: return@get call.respondText("game not found", status = HttpStatusCode.NotFound)
             val user = call.request.cookies["AUTH_TOKEN"]?.let { getUsernameByToken(it) }
             val allGames = findAllGames().map { mapOf("name" to it.name, "maxPlayers" to it.maxPlayers) }
-            
-            val model = mutableMapOf<String, Any>(
+
+            val model = mutableMapOf(
                 "title" to game.name,
                 "game" to mapOf("name" to game.name, "maxPlayers" to game.maxPlayers),
                 "games" to allGames,
                 "hasGames" to allGames.isNotEmpty()
             )
             if (user != null) model["user"] = user
-            call.respondTemplate("game.peb", model = model)
+            call.respondTemplate("gamelist.peb", model = model)
         }
-
-        // ──────────────────────────────────────────────────────────────────
-        // Form submissions (Auth)
-        // ──────────────────────────────────────────────────────────────────
 
         post("/signup") {
             val formParams = call.receiveParameters()
@@ -139,10 +144,8 @@ fun Application.configureRouting() {
             val username = formParams["username"]?.trim() ?: return@post call.respondRedirect("/?error=invalid_credentials")
             val password = formParams["password"] ?: return@post call.respondRedirect("/?error=invalid_credentials")
 
-            val user = findUserByCredentials(username, hashPassword(password))
-            if (user == null) {
-                return@post call.respondRedirect("/?error=invalid_credentials")
-            }
+            findUserByCredentials(username, hashPassword(password))
+                ?: return@post call.respondRedirect("/?error=invalid_credentials")
 
             val token = createSession(username)
             call.response.cookies.append(

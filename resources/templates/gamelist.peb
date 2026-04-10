@@ -1,16 +1,33 @@
-{% extends "base.peb" %}
+    {% extends "base.peb" %}
+        {% block title %}{{ title }}{% endblock %}
     {% block content %}
-    <h1>Games</h1>
-    <div class="box">
-        <ul>
-        <li><img src="resources/assets/chess/Chess_Clt45.svg" alt="Chess Logo"></img>Chess</li>
+<section>
+  <div style="text-align:center;margin-bottom:3rem;">
+    <h1 style="font-size:2.5rem;margin-bottom:0.5rem;color:white;">Select a Game</h1>
+    <p style="color:#9ca3af;font-size:1.1rem;">Welcome back, <strong>{{ user }}</strong>! Choose a game below to host or join a lobby.</p>
+  </div>
 
-{#        {{ gamesList }}#}
-        </ul>
+  {% if hasGames %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:2rem;">
+      {% for game in games %}
+        <article class="card game-card" style="display:flex;flex-direction:column;justify-content:space-between;">
+          <div>
+            <h2 style="margin-bottom:0.5rem;color:white;">{{ game.name }}</h2>
+            <p style="color:#9ca3af;margin-bottom:1.5rem;">Players: 1–{{ game.maxPlayers }}</p>
+              <p>Game description goes here</p>
+          </div>
 
-
+          <div style="margin-top:2rem;display:flex;gap:1rem;">
+              <a href="{{ game.url }}" class="button" style="text-align:center;width:100%;">Enter Lobby</a>
+          </div>
+        </article>
+      {% endfor %}
     </div>
-
-    <div class="box">
+  {% else %}
+    <div class="card" style="text-align:center;padding:4rem;">
+      <h2 style="color:#d1d5db;">Games are currently offline.</h2>
+      <p style="color:#9ca3af;">Please check back later.</p>
     </div>
-    {% endblock %}
+  {% endif %}
+</section>
+{% endblock %}

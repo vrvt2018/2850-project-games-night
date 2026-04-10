@@ -2,8 +2,7 @@
 // Entry point: initialises DB, routing, templates, and WebSocket endpoints
 package com.example
 
-import com.example.network.ChessSocket
-import com.example.network.GoFishSocket
+import com.example.network.RoomHandler
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.pebble.Pebble
@@ -35,11 +34,13 @@ fun Application.module() {
     }
     
     routing {
-        webSocket("/gofish") {
-            GoFishSocket.handle(this)
-        }
+        // Route all gamesockets here
+
+//        webSocket("/gofish") {
+//            RoomHandler.handle(this)
+//        }
         webSocket("/chess") {
-            ChessSocket.handle(this)
+            RoomHandler.handle(this)
         }
     }
 }

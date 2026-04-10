@@ -21,3 +21,8 @@ dependencies:
   - com.h2database:h2:2.2.224
   - $ktor.server.configYaml: runtime-only
   - ch.qos.logback:logback-classic:1.5.22: runtime-only
+# if we want to use kotest
+#test-dependencies:
+#  - io.kotest:kotest-runner-junit5:5.7.2
+#  - io.kotest:kotest-assertions-core:5.7.2
+#  - io.kotest:kotest-property:5.7.2

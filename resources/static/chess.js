@@ -18,6 +18,7 @@ const elGameOver = document.getElementById("gameOverArea");
 const boardEl = document.getElementById("boardEl");
 
 // Pieces mapped to reliable Lichess SVG URLs
+//
 const pieceImages = {
   'K': 'https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wK.svg', 
   'Q': 'https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wQ.svg', 
@@ -99,40 +100,9 @@ ws.onmessage = (e) => {
   }
 };
 
-// Lobby Actions
-function createRoom() {
-  ws.send(JSON.stringify({ type: "CREATE" }));
-}
-
-function joinRoom() {
-  const input = document.getElementById("roomIdInput");
-  const id = input.value.trim();
-  if (id.length !== 4) {
-    document.getElementById("joinError").innerText = "Enter a 4-digit code";
-    document.getElementById("joinError").style.display = "block";
-    return;
-  }
-  document.getElementById("joinError").style.display = "none";
-  document.getElementById("displayRoomId").innerText = id;
-  elLobby.style.display = "none";
-  elWaitingRoom.style.display = "block";
-  document.getElementById("waitingMessage").style.display = "block";
-  ws.send(JSON.stringify({ type: "JOIN", roomId: id }));
-}
-
-function showWaitingRoom(roomId) {
-  document.getElementById("displayRoomId").innerText = roomId;
-  elLobby.style.display = "none";
-  elWaitingRoom.style.display = "block";
-}
-
-function startGame() {
-  ws.send(JSON.stringify({ type: "START" }));
-}
-
 function resign() {
   if (confirm("Are you sure you want to resign?")) {
-    ws.send(JSON.stringify({ type: "RESIGN" }));
+    ws.send(JSON.stringify({ type: "CHESS_RESIGN" })); // NOT CHANGED TO CHESS_RESIGN YET
   }
 }
 
@@ -149,14 +119,14 @@ function handleSquareClick(index) {
     selectedSquare = index;
     legalMovesForSelected = [];
     renderBoard();
-    ws.send(JSON.stringify({ type: "MOVES", from: index }));
+    ws.send(JSON.stringify({ type: "CHESS_MOVES", from: index }));
     return;
   }
 
   // If we clicked an empty square or enemy piece, and we have a piece selected, try to move
   if (selectedSquare !== -1) {
     ws.send(JSON.stringify({
-      type: "MOVE",
+      type: "CHESS_MOVE",
       from: selectedSquare,
       to: index
     }));
