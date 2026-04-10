@@ -33,5 +33,7 @@ abstract class Game(val name: String, val maxPlayers: Int = 2, val minPlayers: I
      * @param playerIndex The player requesting the state (used to hide opponent cards etc.)
      */
     abstract fun getState(playerIndex: Int = -1): Map<String, Any?>
+
+    // Currently in here for use with networking when porting. Should probably be moved
     abstract fun buildState(type: String, game: Game, playerIndex: Int): String
 }

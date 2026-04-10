@@ -1,5 +1,5 @@
 function createRoom() {
-    ws.send(JSON.stringify({ type: "CREATE" }));
+    ws.send(JSON.stringify({ type: "CREATE_CHESS" }));
 }
 
 function joinRoom() {

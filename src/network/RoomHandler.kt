@@ -13,24 +13,9 @@ import kotlinx.serialization.json.jsonPrimitive
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-data class NetworkPlayer(
-    val id: String,
-    val session: DefaultWebSocketServerSession,
-    val playerIndex: Int,
-)
-
-data class Room(
-    val id: String,
-    val players: MutableList<NetworkPlayer> = mutableListOf(),
-    var game: Game? = null, // Generic type - originally was specific per game class
-    var started: Boolean = false,
-)
-
-class GameException : Exception("Game error!") // Thrown when game not recognised - required to ensure that game is correct
-// important because game is abstract and IntelliJ is shouting at me!
-
 object RoomHandler {
     // Socket handler class must contain list of rooms
+    // Concurrent so that multiple clients over multiple sockets can access it at once
     private val rooms: ConcurrentHashMap<String, Room> = ConcurrentHashMap<String, Room>()
 
     // fun createObjectByName(name: String?): Game = Class.forName("com.example." + name?.lowercase()?.capitalize()).newInstance() as Game
@@ -42,9 +27,12 @@ object RoomHandler {
             }
 
             else -> {
-                null
+                println(name?.lowercase())
+                throw Exception("Game does not exist!")
             }
         }
+
+    fun getGameStringFromType(type: String): String = type.split('_')[1]
 
     // Handling code - whenever a socket is created it's directed to this subroutine
     suspend fun handle(session: DefaultWebSocketServerSession) {
@@ -60,56 +48,43 @@ object RoomHandler {
                     }.getOrNull() ?: continue
                 val type = msg["type"]?.jsonPrimitive?.content
 
+                println(msg)
+
                 // Must be handled outside when statement as requires contains function
-                if (type?.contains("START") == true) { // TODO: This doesn't work so add print statement printing after start and stuff
+                if (type?.contains("START") == true) {
+                    //println("Starting...")
                     val r = room ?: continue
                     val p = player ?: continue
-                    // Ignore if not host, max capacity, or game started
-
-                    // Obtain game string from command
-                    val gameString = type.substring("START_".length)
-
-                    // Create instance of game
-                    val game =
-                        createGameByName(gameString) ?: {
-                            throw Exception("Game does not exist!")
-                        } as Game
-
 
                     // The game cannot start if not host, not enough players, or already started
-                    if (p.playerIndex == 0 && r.players.size > game.minPlayers && !r.started) {
+                    if (p.playerIndex == 0 && r.players.size >= r.game!!.minPlayers && !r.started) {
                         r.started = true
+                        // _ -> is required because otherwise the "it" variable is unused and ktlint doesn't like that
+                        r.players.forEach { _ -> r.game!!.addPlayer() }
+                        r.game!!.startGame()
 
-                        // I'm not entirely sure why ktlint flags this without "_ ->"
-                        r.players.forEach { _ -> game.addPlayer() }
-                        game.startGame()
-                        r.game = game
                         r.players.forEachIndexed { i, pl ->
                             // Part of protocol - START type starts game
-                            pl.session.send(game.buildState("START", game, i))
+                            // Should probably move this function somewhere IDK where tho, it is from when it was all hardcoded
+                            pl.session.send(r.game!!.buildState("START", r.game!!, i))
                         }
                     }
-                }
+                } else if (type?.contains("CREATE") == true) {
+                    val game = // Instantiate game depending on who called
+                        createGameByName(getGameStringFromType(type)) as Game
 
-                when (type) {
-                    "CREATE" -> { // Create new room
-                        val (p, r) = createGame(session)
-                        player = p
-                        room = r
-                    }
-
-                    "JOIN" -> { // Player joins a room
-                        val (p, r) = joinGame(session, msg, player, room)
-                        player = p
-                        room = r
-                    }
-
-                    else -> { // Not a base command -> outsource to respective handle function
-                        when (room?.game?.name) // each game has a respective handler
-                        {
-                            "Chess" -> ChessHandler.handle(msg, type, session, player, room)
-                            // "GoFish" -> GoFishHandler.handle(session,player,room)
-                        }
+                    val (p, r) = createRoom(session, game)
+                    player = p
+                    room = r
+                } else if (type == "JOIN") { // Player joins a room
+                    val (p, r) = joinGame(session, msg, player, room)
+                    player = p
+                    room = r
+                } else { // Not a base command -> outsource to respective handle function
+                    when (room?.game?.name) // each game has a respective handler
+                    {
+                        "Chess" -> ChessHandler.handle(msg, type, session, player, room)
+                        // "GoFish" -> GoFishHandler.handle(session,player,room)
                     }
                 }
             }
@@ -121,14 +96,16 @@ object RoomHandler {
     // Generate room ID between 0000 and 9999 inclusive
     fun generateRoomId(): String = (0..9999).random().toString().padStart(4, '0')
 
-    // Send message to all clients in room over respective websocket
-
     // Functions createGame, joinGame and cleanUpRoom are for use in respective game sockets
     // For use upon receiving "CREATE"
-    suspend fun createGame(session: DefaultWebSocketServerSession): Pair<NetworkPlayer, Room> {
+    suspend fun createRoom(
+        session: DefaultWebSocketServerSession,
+        game: Game,
+    ): Pair<NetworkPlayer, Room> {
         val roomId = generateRoomId()
-        val p = NetworkPlayer(UUID.randomUUID().toString(), session, 0)
+        val p = NetworkPlayer(UUID.randomUUID().toString(), session, 0) // Always 0 == host
         val r = Room(roomId)
+        r.game = game // Set room game to the game
         r.players.add(p)
         rooms[roomId] = r
         session.send("""{"type":"ROOM_CREATED","roomId":"$roomId","playerIndex":0}""")
@@ -142,9 +119,10 @@ object RoomHandler {
         player: NetworkPlayer?,
         room: Room?,
     ): Pair<NetworkPlayer?, Room?> {
-        val roomId = msg["roomId"]?.jsonPrimitive?.content ?: return player to room
+        val roomId = msg["roomId"]!!.jsonPrimitive.content // Exit early if null
         val r = rooms[roomId]
         when {
+            // Join fail conditions
             r == null -> {
                 session.send("""{"type":"JOIN_FAIL","reason":"Room not found"}""")
             }
@@ -153,7 +131,9 @@ object RoomHandler {
                 session.send("""{"type":"JOIN_FAIL","reason":"Game already in progress"}""")
             }
 
-            r.players.size >= 2 -> { // Currently hardcoded for 2 players urgh
+            // I used AI on this line. I couldn't figure out why it would fail at all cases of the when
+            // It was because game was null and not created at this point, so failed the null assertion
+            r.players.size >= r.game!!.maxPlayers -> {
                 session.send("""{"type":"JOIN_FAIL","reason":"Room is full"}""")
             }
 
@@ -165,7 +145,9 @@ object RoomHandler {
                 return p to r
             }
         }
-        return player to room // Otherwise, return normal player and room. Seems like the only way to do this when statement
+        // Otherwise, return normal player and room. Seems like the only way to do this when statement
+        // You should never actually reach here!
+        return player to room
     }
 
     // Remove all players from room -> to be used in finally{} statement in match statement
@@ -174,7 +156,7 @@ object RoomHandler {
         player: NetworkPlayer?,
     ) {
         room?.let { r ->
-            r.players.removeIf { it.id == player?.id }
+            r.players.removeIf { it.id == player!!.id }
             if (r.players.isEmpty()) {
                 rooms.remove(r.id)
             } else {
@@ -183,10 +165,3 @@ object RoomHandler {
         }
     }
 }
-
-// Needs to be outside so other handlers can use it.
-// There might be a better more object-oriented way to do this
-suspend fun broadcast(
-    room: Room,
-    msg: String,
-) = room.players.forEach { it.session.send(msg) }

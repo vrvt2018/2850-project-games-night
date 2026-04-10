@@ -3,12 +3,12 @@
 package com.example.network
 
 import com.example.games.Chess
-// import io.ktor.network.sockets.Socket
-import io.ktor.server.websocket.*
-import io.ktor.websocket.*
+import io.ktor.server.websocket.DefaultWebSocketServerSession
+import io.ktor.websocket.send
 import kotlinx.serialization.json.*
 
 // This is obviously AI-generated.
+
 /**
  * WebSocket handler for the Chess game.
  *
@@ -44,46 +44,22 @@ object ChessHandler : GameSocketHandler() {
         player: NetworkPlayer?,
         room: Room?,
     ) {
+        // To speed things up, these are asserted not-null here
+        // They are required for all functions in this
+        val r = room ?: return
+        val g = r.game as? Chess
+        val p = player ?: return
         when (type) {
-            // start class should be encapsulated in generic handler cast i think
-//            "START" -> {
-//                val r = room ?: return
-//                val p = player ?: return
-//                if (p.playerIndex != 0 || r.players.size < 2 || r.started) return
-//                r.started = true
-//                val game = Chess() // This function must be unique to games as it instantiates its own game type
-//                game.addPlayer()
-//                game.addPlayer() // Add two players
-//                game.startGame()
-//                r.game = game
-//                r.players.forEachIndexed { i, pl ->
-//                    pl.session.send(buildState("START", game, i))
-//                }
-//            }
-
             "CHESS_MOVES" -> {
-                val r = room ?: return
-                val g = r.game ?: return
-                val p = player ?: return
                 val from = msg["from"]?.jsonPrimitive?.intOrNull ?: return
 
-                // Game is abstract so check if it's an instance of chess
-                if (g !is Chess) throw GameException()
-
-                if (g.currentPlayer() != p.playerIndex) return
+                if (g?.currentPlayer() != p.playerIndex) return
                 val moves = g.legalMovesFrom(from)
                 session.send("""{"type":"LEGAL_MOVES","from":$from,"moves":$moves}""")
             }
 
             "CHESS_MOVE" -> {
-                val r = room ?: return
-                val g = r.game ?: return
-                val p = player ?: return
-
-                // as before...
-                if (g !is Chess) throw GameException()
-
-                if (g.currentPlayer() != p.playerIndex) return
+                if (g?.currentPlayer() != p.playerIndex) return
                 val from = msg["from"]?.jsonPrimitive?.intOrNull ?: return
                 val to = msg["to"]?.jsonPrimitive?.intOrNull ?: return
 
@@ -103,8 +79,6 @@ object ChessHandler : GameSocketHandler() {
             }
 
             "CHESS_RESIGN" -> {
-                val r = room ?: return
-                val p = player ?: return
                 val winner = 1 - p.playerIndex
                 broadcast(r, """{"type":"GAME_END","winner":$winner,"reason":"resignation"}""")
             }
