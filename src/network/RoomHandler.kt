@@ -1,6 +1,7 @@
 package com.example.network
 
 import com.example.games.Chess
+import com.example.games.GoFish
 import com.example.games.Game
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.Frame
@@ -24,6 +25,10 @@ object RoomHandler {
         when (name?.lowercase()) {
             "chess" -> {
                 Chess()
+            }
+
+            "go fish" -> {
+                GoFish()
             }
 
             else -> {
@@ -84,7 +89,7 @@ object RoomHandler {
                     when (room?.game?.name) // each game has a respective handler
                     {
                         "Chess" -> ChessHandler.handle(msg, type, session, player, room)
-                        // "GoFish" -> GoFishHandler.handle(session,player,room)
+                        "Go Fish" -> GoFishHandler.handle(msg, type, session, player, room)
                     }
                 }
             }

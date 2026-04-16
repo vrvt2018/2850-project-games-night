@@ -72,14 +72,14 @@ function askForCard() {
   if (target === "" || rank === "") return;
 
   ws.send(JSON.stringify({
-    type: "ASK",
+    type: "GOFISH_ASK",
     target: parseInt(target),
     rank: rank
   }));
 }
 
 function endTurn() {
-  ws.send(JSON.stringify({ type: "END_TURN" }));
+  ws.send(JSON.stringify({ type: "GOFISH_END_TURN" }));
 }
 
 function showActionResult(success) {
@@ -95,6 +95,21 @@ function showActionResult(success) {
     document.getElementById("btnAsk").disabled = true;
     document.getElementById("btnEndTurn").style.display = "inline-block";
   }
+}
+
+function joinRoom() {
+  const roomId = document.getElementById("roomIdInput").value;
+
+  ws.send(JSON.stringify({
+    type: "JOIN",
+    roomId: roomId
+  }));
+}
+
+function startGame() {
+  ws.send(JSON.stringify({
+    type: "START_GO_FISH"
+  }));
 }
 
 // State Rendering

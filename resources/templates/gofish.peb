@@ -98,5 +98,5 @@
 </section>
 
 <!-- Include script that connects WebSocket and handles UI updates -->
-<script src="/resources/Go_Fish.js"></script>
+<script src="/resources/gofish.js"></script>
 {% endblock %}
