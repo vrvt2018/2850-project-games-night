@@ -121,6 +121,8 @@ class GoFish : Game("Go Fish", maxPlayers = 4) {
     override fun getWinner(): Int = winner
 
     override fun getState(playerIndex: Int): Map<String, Any?> {
+        val myHand = hands.getOrNull(playerIndex)?.map { it.imageUrl() } ?: emptyList<String>()
+        val myHandRanks = hands.getOrNull(playerIndex)?.map { it.rankString() } ?: emptyList<String>()
         return mapOf(
             "turn" to turn,
             "deckSize" to drawPile.size,
@@ -131,8 +133,8 @@ class GoFish : Game("Go Fish", maxPlayers = 4) {
             "books" to books.toList(),
             "handSizes" to hands.map { it.size },
 
-            "myHand" to hands.getOrNull(playerIndex)?.map { it.imageUrl() } ?: emptyList<String>(),
-            "myHandRanks" to hands.getOrNull(playerIndex)?.map { it.rankString() } ?: emptyList<String>()
+            "myHand" to myHand as Any,
+            "myHandRanks" to myHandRanks as Any
         )
     }
 }
