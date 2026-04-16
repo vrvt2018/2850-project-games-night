@@ -16,10 +16,7 @@ class GoFish : Game("Go Fish", maxPlayers = 4) {
     private val books = mutableListOf<Int>()
 
     private var turn: Int = 0
-    private var winner: Int = -2 // -2 未结束，-1 平局
-
-    override val minPlayers: Int
-        get() = 2
+    private var winner: Int = -2 
 
     override fun addPlayer(): Boolean {
         if (numPlayers >= maxPlayers) return false
@@ -50,9 +47,15 @@ class GoFish : Game("Go Fish", maxPlayers = 4) {
         turn = 0
         winner = -2
     }
-
+    
     fun currentPlayer(): Int = turn
 
+        override fun buildState(type: String, game: Game, playerIndex: Int): String {
+        val state = getState(playerIndex).toMutableMap()
+        state["type"] = type
+        return kotlinx.serialization.json.Json.encodeToString(state)
+    }
+    
     fun askForCard(targetPlayer: Int, rank: String): Boolean {
         if (targetPlayer !in 0 until numPlayers || targetPlayer == turn) return false
 
@@ -128,8 +131,8 @@ class GoFish : Game("Go Fish", maxPlayers = 4) {
             "books" to books.toList(),
             "handSizes" to hands.map { it.size },
 
-            "myHand" to hands.getOrNull(playerIndex)?.map { it.imageUrl() } ?: emptyList(),
-            "myHandRanks" to hands.getOrNull(playerIndex)?.map { it.rankString() } ?: emptyList()
+            "myHand" to hands.getOrNull(playerIndex)?.map { it.imageUrl() } ?: emptyList<String>(),
+            "myHandRanks" to hands.getOrNull(playerIndex)?.map { it.rankString() } ?: emptyList<String>()
         )
     }
 }

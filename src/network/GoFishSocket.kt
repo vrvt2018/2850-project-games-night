@@ -70,7 +70,7 @@ object GoFishHandler : GameSocketHandler() {
             return
         }
 
-        val target = msg["target"]?.jsonPrimitive?.intOrNull?.takeIf { it in 0 until room.players.size } ?: run {
+        val target = msg["target"]?.jsonPrimitive?.content?.toIntOrNull().takeIf { it in 0 until room.players.size } ?: run {
             session.send(buildErrorMsg(Protocol.REASON_INVALID_TARGET))
             return
         }
