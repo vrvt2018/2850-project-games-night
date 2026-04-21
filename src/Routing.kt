@@ -49,7 +49,7 @@ fun Application.configureRouting() {
                 mapOf(
                     "name" to it.name,
                     "maxPlayers" to it.maxPlayers,
-                    "url" to "/games/" + it.name.lowercase()
+                    "url" to "/games/" + it.name.replace(" ", "").lowercase()
                     )
             }
             val model = mapOf(
@@ -81,11 +81,12 @@ fun Application.configureRouting() {
 
 
         get("/games/{name}") {
-            val name = call.parameters["name"] ?: return@get call.respondText("game name required", status = HttpStatusCode.BadRequest)
+            val rawName = call.parameters["name"]
+            val name = rawName?.replace(" ", "")?.lowercase() ?: return@get call.respondText("game name required", status = HttpStatusCode.BadRequest)
             
             // Redirect to game
-            if (name.lowercase() == "gofish") return@get call.respondRedirect("/games/gofish")
-            if (name.lowercase() == "chess") return@get call.respondRedirect("/games/chess")
+            if (name == "gofish") return@get call.respondRedirect("/games/gofish")
+            if (name == "chess") return@get call.respondRedirect("/games/chess")
 
 
             // Otherwise, if game not found...
