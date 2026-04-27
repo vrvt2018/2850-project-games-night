@@ -1,5 +1,9 @@
 function createRoom() {
-    ws.send(JSON.stringify({ type: "CREATE_CHESS" }));
+    const game = window.location.pathname.includes("chess") ? "CHESS" : "GOFISH";
+    elLobby.style.display = "none";
+    elWaitingRoom.style.display = "block";
+    document.getElementById("waitingMessage").style.display = "block";
+    ws.send(JSON.stringify({ type: `CREATE_${game}` }));
 }
 
 function joinRoom() {
@@ -15,7 +19,8 @@ function joinRoom() {
     elLobby.style.display = "none";
     elWaitingRoom.style.display = "block";
     document.getElementById("waitingMessage").style.display = "block";
-    ws.send(JSON.stringify({ type: "JOIN", roomId: id }));
+    const game = window.location.pathname.includes("chess") ? "CHESS" : "GOFISH";
+    ws.send(JSON.stringify({type: "JOIN", roomId: id, game: game}));
 }
 
 function showWaitingRoom(roomId) {
@@ -27,7 +32,8 @@ function showWaitingRoom(roomId) {
 // TEMPORARILY HARD-CODED FOR CHESS! THIS SHOULUD BE CHANGED AND MOVED TO RESPECTIVE JS FILE
 // ALSO RIGHT NOW DOESN'T WORK.........
 function startGame() {
-    ws.send(JSON.stringify({ type: "START_CHESS" }));
+    const game = window.location.pathname.includes("chess") ? "CHESS" : "GOFISH";
+    ws.send(JSON.stringify({ type: `START_${game}` }));
 }
 
 function resign() {

@@ -143,9 +143,10 @@ object RoomHandler {
             }
 
             else -> {
-                val p = NetworkPlayer(UUID.randomUUID().toString(), session, 1)
+                val index = r.players.size
+                val p = NetworkPlayer(UUID.randomUUID().toString(), session, index)
                 r.players.add(p)
-                session.send("""{"type":"JOIN_OK","playerIndex":1}""")
+                session.send("""{"type":"JOIN_OK","playerIndex":1,"roomId":"${r.id}"}""")
                 broadcast(r, """{"type":"PLAYER_UPDATE","count":${r.players.size}}""")
                 return p to r
             }

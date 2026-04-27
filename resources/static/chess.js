@@ -47,6 +47,8 @@ ws.onmessage = (e) => {
 
     case "JOIN_OK":
       myPlayerIndex = msg.playerIndex;
+      showWaitingRoom(msg.roomId);
+      document.getElementById("waitingMessage").style.display = "block";
       break;
 
     case "JOIN_FAIL":
