@@ -7,8 +7,7 @@ package com.example.games
 * The game ends when all 13 books have been formed or the deck is empty and no
 * player can make a move.
 */
-
-class GoFish : Game("Go Fish", maxPlayers = 4) {
+class GoFish : Game("Go Fish", 4, 2) {
 
     private val deck = Deck()
     private val drawPile = mutableListOf<Card>()
@@ -16,7 +15,7 @@ class GoFish : Game("Go Fish", maxPlayers = 4) {
     private val books = mutableListOf<Int>()
 
     private var turn: Int = 0
-    private var winner: Int = -2 
+    private var winner: Int = -2
 
     override fun addPlayer(): Boolean {
         if (numPlayers >= maxPlayers) return false
@@ -25,6 +24,7 @@ class GoFish : Game("Go Fish", maxPlayers = 4) {
     }
 
     override fun startGame() {
+        started = true
         drawPile.clear()
         drawPile.addAll(deck.cards.toList().shuffled())
 
@@ -47,17 +47,36 @@ class GoFish : Game("Go Fish", maxPlayers = 4) {
         turn = 0
         winner = -2
     }
-    
+
     fun currentPlayer(): Int = turn
 
-        override fun buildState(type: String, game: Game, playerIndex: Int): String {
-        val state = getState(playerIndex).toMutableMap()
-        state["type"] = type
-        return kotlinx.serialization.json.Json.encodeToString(state)
+    override fun buildState(type: String, game: Game, playerIndex: Int): String {
+        val state = game.getState(playerIndex)
+        val myHand = (state["myHand"] as List<*>).joinToString("\",\"", "\"", "\"")
+        val myHandRanks = (state["myHandRanks"] as List<*>).joinToString("\",\"", "\"", "\"")
+        val books = (state["books"] as List<*>).joinToString(",")
+        val handSizes = (state["handSizes"] as List<*>).joinToString(",")
+
+        return buildString {
+            append("""{"type":"$type"""")
+            append(""","turn":${state["turn"]}""")
+            append(""","deckSize":${state["deckSize"]}""")
+            append(""","numPlayers":${state["numPlayers"]}""")
+            append(""","gameOver":${state["gameOver"]}""")
+            append(""","winner":${state["winner"] ?: "null"}""")
+            append(""","books":[$books]""")
+            append(""","handSizes":[$handSizes]""")
+            append(""","myHand":[$myHand]""")
+            append(""","myHandRanks":[$myHandRanks]}""")
+        }
     }
-    
+
     fun askForCard(targetPlayer: Int, rank: String): Boolean {
+        if (isGameOver()) return false
         if (targetPlayer !in 0 until numPlayers || targetPlayer == turn) return false
+
+        val currentHand = hands[turn]
+        if (currentHand.none { it.rankString() == rank }) return false
 
         val targetHand = hands[targetPlayer]
         val matching = targetHand.filter { it.rankString() == rank }
@@ -77,6 +96,8 @@ class GoFish : Game("Go Fish", maxPlayers = 4) {
     }
 
     fun endTurn() {
+        if (isGameOver()) return
+
         var attempts = 0
         do {
             turn = (turn + 1) % numPlayers
@@ -121,20 +142,18 @@ class GoFish : Game("Go Fish", maxPlayers = 4) {
     override fun getWinner(): Int = winner
 
     override fun getState(playerIndex: Int): Map<String, Any?> {
-        val myHand = hands.getOrNull(playerIndex)?.map { it.imageUrl() } ?: emptyList<String>()
-        val myHandRanks = hands.getOrNull(playerIndex)?.map { it.rankString() } ?: emptyList<String>()
+        val myHand = hands.getOrNull(playerIndex)?.map { it.imageUrl() } ?: emptyList()
+        val myHandRanks = hands.getOrNull(playerIndex)?.map { it.rankString() } ?: emptyList()
         return mapOf(
             "turn" to turn,
             "deckSize" to drawPile.size,
             "numPlayers" to numPlayers,
             "gameOver" to isGameOver(),
             "winner" to if (isGameOver()) winner else null,
-
             "books" to books.toList(),
             "handSizes" to hands.map { it.size },
-
-            "myHand" to myHand as Any,
-            "myHandRanks" to myHandRanks as Any
+            "myHand" to myHand,
+            "myHandRanks" to myHandRanks
         )
     }
 }

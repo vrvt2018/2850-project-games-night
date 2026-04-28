@@ -13,8 +13,6 @@ let selectedSquare = -1;
 let legalMovesForSelected = [];
 
 // UI Elements
-const elLobby = document.getElementById("lobby");
-const elWaitingRoom = document.getElementById("waitingRoom");
 const elGameArea = document.getElementById("gameArea");
 const elGameOver = document.getElementById("gameOverArea");
 const boardEl = document.getElementById("boardEl");

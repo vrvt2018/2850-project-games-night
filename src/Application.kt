@@ -34,12 +34,10 @@ fun Application.module() {
     }
     
     routing {
-        // Route all gamesockets here
-
-//        webSocket("/gofish") {
-//            RoomHandler.handle(this)
-//        }
         webSocket("/chess") {
+            RoomHandler.handle(this)
+        }
+        webSocket("/gofish") {
             RoomHandler.handle(this)
         }
     }
@@ -60,7 +58,7 @@ fun Application.configureStatusPages() {
 fun Application.configureTemplates() {
     install(Pebble) {
         loader(ClasspathLoader().apply {
-            prefix = "templates" // templates stored in resources/templates
+            prefix = "templates"
         })
     }
 }
