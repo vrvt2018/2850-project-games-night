@@ -1,5 +1,7 @@
 const gameName = window.location.pathname.split("/").pop();
 const ws = new WebSocket(`ws://${location.host}/${gameName}`);
+const elLobby = document.getElementById("lobby");
+const elWaitingRoom = document.getElementById("waitingRoom");
 
 function createRoom() {
     const game = window.location.pathname.split("/").pop().toUpperCase();

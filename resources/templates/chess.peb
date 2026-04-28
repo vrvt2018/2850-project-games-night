@@ -30,4 +30,5 @@
 
 <!-- Include script that connects WebSocket and handles UI updates -->
 <script src="/resources/chess.js"></script>
+<script src="/resources/lobby.js"></script>
 {% endblock %}
