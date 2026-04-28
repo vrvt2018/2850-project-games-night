@@ -1,7 +1,7 @@
-if (!window.elLobby) {
+document.addEventListener("DOMContentLoaded", () => {
     window.elLobby = document.getElementById("lobby");
-}
-const elWaitingRoom = document.getElementById("waitingRoom");
+    window.elWaitingRoom = document.getElementById("waitingRoom");
+});
 
 function createRoom() {
     if (!window.ws || window.ws.readyState !== WebSocket.OPEN) return;
@@ -35,9 +35,22 @@ function joinRoom() {
 }
 
 function showWaitingRoom(roomId) {
-    document.getElementById("displayRoomId").innerText = roomId;
-    elLobby.style.display = "none";
-    elWaitingRoom.style.display = "block";
+    const displayRoomId = document.getElementById("displayRoomId");
+    if (displayRoomId) {
+        displayRoomId.innerText = roomId;
+    } else {
+        console.warn("displayRoomId not found");
+    }
+    if (window.elLobby) {
+        window.elLobby.style.display = "none";
+    } else {
+        console.warn("elLobby not initialized");
+    }
+    if (window.elWaitingRoom) {
+        window.elWaitingRoom.style.display = "block";
+    } else {
+        console.warn("elWaitingRoom not initialized");
+    }
 }
 
 // TEMPORARILY HARD-CODED FOR CHESS! THIS SHOULUD BE CHANGED AND MOVED TO RESPECTIVE JS FILE
