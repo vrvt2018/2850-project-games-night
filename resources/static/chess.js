@@ -2,6 +2,7 @@
 // AI-assisted: Board rendering, WebSocket message handling, and DOM manipulation (Gemini)
 // Core game logic and move validation handled server-side in Chess.kt
 const protocol = location.protocol === "https:" ? "wss" : "ws";
+const gameName = window.location.pathname.split("/").pop();
 const ws = new WebSocket(`${protocol}://${location.host}/${gameName}`);
 window.ws = ws;
 

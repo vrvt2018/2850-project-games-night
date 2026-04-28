@@ -1,4 +1,6 @@
-const elLobby = document.getElementById("lobby");
+if (!window.elLobby) {
+    window.elLobby = document.getElementById("lobby");
+}
 const elWaitingRoom = document.getElementById("waitingRoom");
 
 function createRoom() {
