@@ -1,6 +1,5 @@
 // Go Fish Frontend - WebSocket client
 // AI-assisted: UI rendering logic and WebSocket message handling (Gemini 2.5 Pro)
-const ws = new WebSocket(`ws://${location.host}/gofish`);
 let myPlayerIndex = -1;
 let isHost = false;
 

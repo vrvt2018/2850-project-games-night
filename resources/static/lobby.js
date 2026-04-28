@@ -1,3 +1,6 @@
+const gameName = window.location.pathname.split("/").pop();
+const ws = new WebSocket(`ws://${location.host}/${gameName}`);
+
 function createRoom() {
     const game = window.location.pathname.split("/").pop().toUpperCase();
     ws.send(JSON.stringify({ type: `CREATE_${game}` }));
