@@ -1,8 +1,5 @@
 function createRoom() {
-    const game = window.location.pathname.includes("chess") ? "CHESS" : "GOFISH";
-    elLobby.style.display = "none";
-    elWaitingRoom.style.display = "block";
-    document.getElementById("waitingMessage").style.display = "block";
+    const game = window.location.pathname.split("/").pop().toUpperCase();
     ws.send(JSON.stringify({ type: `CREATE_${game}` }));
 }
 
@@ -15,12 +12,10 @@ function joinRoom() {
         return;
     }
     document.getElementById("joinError").style.display = "none";
-    document.getElementById("displayRoomId").innerText = id;
-    elLobby.style.display = "none";
-    elWaitingRoom.style.display = "block";
-    document.getElementById("waitingMessage").style.display = "block";
-    const game = window.location.pathname.includes("chess") ? "CHESS" : "GOFISH";
-    ws.send(JSON.stringify({type: "JOIN", roomId: id, game: game}));
+    ws.send(JSON.stringify({
+        type: "JOIN",
+        roomId: id
+    }));
 }
 
 function showWaitingRoom(roomId) {

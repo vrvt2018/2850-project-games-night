@@ -42,18 +42,21 @@ ws.onmessage = (e) => {
     case "ROOM_CREATED":
       isHost = true;
       myPlayerIndex = msg.playerIndex;
-      showWaitingRoom(msg.roomId);
+      showWaitingRoom(msg.roomId || "????");
+      document.getElementById("waitingMessage").style.display = "block";
       break;
 
     case "JOIN_OK":
       myPlayerIndex = msg.playerIndex;
-      showWaitingRoom(msg.roomId);
+      showWaitingRoom(msg.roomId || "????");
       document.getElementById("waitingMessage").style.display = "block";
       break;
 
     case "JOIN_FAIL":
       document.getElementById("joinError").innerText = msg.reason;
       document.getElementById("joinError").style.display = "block";
+      document.getElementById("lobby").style.display = "block";
+      document.getElementById("waitingRoom").style.display = "none";
       break;
 
     case "PLAYER_UPDATE":
