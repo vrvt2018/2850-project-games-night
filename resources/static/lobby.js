@@ -1,11 +1,9 @@
-const gameName = window.location.pathname.split("/").pop();
-const ws = new WebSocket(`ws://${location.host}/${gameName}`);
 const elLobby = document.getElementById("lobby");
 const elWaitingRoom = document.getElementById("waitingRoom");
 
 function createRoom() {
     const game = window.location.pathname.split("/").pop().toUpperCase();
-    ws.send(JSON.stringify({ type: `CREATE_${game}` }));
+    window.ws.send(JSON.stringify({ type: `CREATE_${game}` }));
 }
 
 function joinRoom() {
@@ -17,7 +15,7 @@ function joinRoom() {
         return;
     }
     document.getElementById("joinError").style.display = "none";
-    ws.send(JSON.stringify({
+    window.ws.send(JSON.stringify({
         type: "JOIN",
         roomId: id
     }));
@@ -33,11 +31,11 @@ function showWaitingRoom(roomId) {
 // ALSO RIGHT NOW DOESN'T WORK.........
 function startGame() {
     const game = window.location.pathname.includes("chess") ? "CHESS" : "GOFISH";
-    ws.send(JSON.stringify({ type: `START_${game}` }));
+    window.ws.send(JSON.stringify({ type: `START_${game}` }));
 }
 
 function resign() {
     if (confirm("Are you sure you want to resign?")) {
-        ws.send(JSON.stringify({ type: "RESIGN" }));
+        window.ws.send(JSON.stringify({ type: "RESIGN" }));
     }
 }

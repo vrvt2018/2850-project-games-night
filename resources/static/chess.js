@@ -1,8 +1,9 @@
 // Chess Frontend - WebSocket client & board rendering
 // AI-assisted: Board rendering, WebSocket message handling, and DOM manipulation (Gemini)
 // Core game logic and move validation handled server-side in Chess.kt
-const ws = new WebSocket(`ws://${window.location.host}/ws`);
-window.ws = ws; 
+const protocol = location.protocol === "https:" ? "wss" : "ws";
+const ws = new WebSocket(`${protocol}://${location.host}/${gameName}`);
+window.ws = ws;
 
 let myPlayerIndex = -1; // 0 for White, 1 for Black
 let isHost = false;
