@@ -1,5 +1,10 @@
 // Go Fish Frontend - WebSocket client
 // AI-assisted: UI rendering logic and WebSocket message handling (Gemini 2.5 Pro)
+const protocol = location.protocol === "https:" ? "wss" : "ws";
+const gameName = window.location.pathname.split("/").pop();
+const ws = new WebSocket(`${protocol}://${location.host}/${gameName}`);
+window.ws = ws;
+
 let myPlayerIndex = -1;
 let isHost = false;
 
