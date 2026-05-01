@@ -29,6 +29,5 @@
 </section>
 
 <!-- Include script that connects WebSocket and handles UI updates -->
-<script src="/resources/lobby.js"></script>
 <script src="/resources/chess.js"></script>
 {% endblock %}

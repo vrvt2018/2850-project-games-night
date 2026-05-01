@@ -84,14 +84,21 @@ object RoomHandler {
         session: DefaultWebSocketServerSession,
         game: Game,
     ): Pair<NetworkPlayer, Room> {
-        val roomId = generateRoomId()
         val p = NetworkPlayer(UUID.randomUUID().toString(), session, 0)
-        val r = Room(roomId)
-        r.game = game
-        r.players.add(p)
-        rooms[roomId] = r
-        session.send("""{"type":"ROOM_CREATED","roomId":"$roomId","playerIndex":0}""")
-        return p to r
+
+        while (true) {
+            val roomId = generateRoomId()
+            val r = Room(
+                id = roomId,
+                players = mutableListOf(p),
+                game = game,
+            )
+
+            if (rooms.putIfAbsent(roomId, r) == null) {
+                session.send("""{"type":"ROOM_CREATED","roomId":"$roomId","playerIndex":0}""")
+                return p to r
+            }
+        }
     }
 
     suspend fun joinGame(
@@ -100,7 +107,11 @@ object RoomHandler {
         player: NetworkPlayer?,
         room: Room?,
     ): Pair<NetworkPlayer?, Room?> {
-        val roomId = msg["roomId"]!!.jsonPrimitive.content
+        val roomId = msg["roomId"]?.jsonPrimitive?.content?.trim()
+        if (roomId.isNullOrEmpty()) {
+            session.send("""{"type":"JOIN_FAIL","reason":"Room code is required"}""")
+            return player to room
+        }
         val r = rooms[roomId]
         when {
             r == null -> {
@@ -113,9 +124,10 @@ object RoomHandler {
                 session.send("""{"type":"JOIN_FAIL","reason":"Room is full"}""")
             }
             else -> {
-                val p = NetworkPlayer(UUID.randomUUID().toString(), session, 1)
+                val playerIndex = r.players.size
+                val p = NetworkPlayer(UUID.randomUUID().toString(), session, playerIndex)
                 r.players.add(p)
-                session.send("""{"type":"JOIN_OK","playerIndex":1}""")
+                session.send("""{"type":"JOIN_OK","roomId":"$roomId","playerIndex":$playerIndex}""")
                 broadcast(r, """{"type":"PLAYER_UPDATE","count":${r.players.size}}""")
                 return p to r
             }

@@ -1,6 +1,12 @@
 document.addEventListener("DOMContentLoaded", () => {
     window.elLobby = document.getElementById("lobby");
     window.elWaitingRoom = document.getElementById("waitingRoom");
+    const roomIdInput = document.getElementById("roomIdInput");
+    if (roomIdInput) {
+        roomIdInput.addEventListener("input", () => {
+            roomIdInput.value = roomIdInput.value.replace(/\D/g, "").slice(0, 4);
+        });
+    }
 });
 
 function createRoom() {
@@ -20,18 +26,16 @@ function joinRoom() {
     if (!window.ws || window.ws.readyState !== WebSocket.OPEN) return;
     const input = document.getElementById("roomIdInput");
     const id = input.value.trim();
-    if (id.length !== 4) {
+    if (!/^\d{4}$/.test(id)) {
         document.getElementById("joinError").innerText = "Enter a 4-digit code";
         document.getElementById("joinError").style.display = "block";
         return;
     }
     document.getElementById("joinError").style.display = "none";
-    window.ws.send({
+    window.ws.send(JSON.stringify({
         type: "JOIN",
         roomId: id
-    });
-    showWaitingRoom(id);
-    document.getElementById("waitingMessage").style.display = "block";
+    }));
 }
 
 function showWaitingRoom(roomId) {

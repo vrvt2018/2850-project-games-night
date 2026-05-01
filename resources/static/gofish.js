@@ -22,15 +22,20 @@ ws.onmessage = (e) => {
       isHost = true;
       myPlayerIndex = msg.playerIndex;
       showWaitingRoom(msg.roomId);
+      document.getElementById("waitingMessage").style.display = "block";
       break;
 
     case "JOIN_OK":
       myPlayerIndex = msg.playerIndex;
+      showWaitingRoom(msg.roomId || document.getElementById("roomIdInput").value.trim());
+      document.getElementById("waitingMessage").style.display = "block";
       break;
 
     case "JOIN_FAIL":
       document.getElementById("joinError").innerText = msg.reason;
       document.getElementById("joinError").style.display = "block";
+      document.getElementById("lobby").style.display = "block";
+      document.getElementById("waitingRoom").style.display = "none";
       break;
 
     case "PLAYER_UPDATE":
@@ -99,21 +104,6 @@ function showActionResult(success) {
     document.getElementById("btnAsk").disabled = true;
     document.getElementById("btnEndTurn").style.display = "inline-block";
   }
-}
-
-function joinRoom() {
-  const roomId = document.getElementById("roomIdInput").value;
-
-  ws.send(JSON.stringify({
-    type: "JOIN",
-    roomId: roomId
-  }));
-}
-
-function startGame() {
-  ws.send(JSON.stringify({
-    type: "START_GO_FISH"
-  }));
 }
 
 // State Rendering
