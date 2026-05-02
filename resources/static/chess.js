@@ -70,10 +70,19 @@ ws.onmessage = (e) => {
       }
       break;
 
+    case "CHAT_HISTORY":
+      renderChatMessages(msg.messages || []);
+      break;
+
+    case "CHAT_MESSAGE":
+      appendChatMessage(msg.message);
+      break;
+
     case "START":
       elLobby.style.display = "none";
       elWaitingRoom.style.display = "none";
       elGameArea.style.display = "block";
+      setChatVisible(true);
       document.getElementById("playerColorText").innerText = 
         myPlayerIndex === 0 ? "You are White (bottom)" : "You are Black (top)";
       updateGameState(msg);

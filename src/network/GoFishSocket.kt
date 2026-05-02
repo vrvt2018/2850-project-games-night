@@ -82,11 +82,13 @@ object GoFishHandler : GameSocketHandler() {
         val askSuccess = game.askForCard(target, rank)
 
         if (game.isGameOver()) {
+            RoomHandler.markRoomFinished(room)
             broadcast(room, buildGameEndMsg(game.getWinner()))
         } else {
             room.players.forEachIndexed { index, pl ->
                 pl.session.send(buildStateMsg(Protocol.TYPE_ASK_RESULT, game, index, askSuccess))
             }
+            RoomHandler.touchRoom(room)
         }
     }
 
@@ -104,11 +106,13 @@ object GoFishHandler : GameSocketHandler() {
         game.endTurn()
 
         if (game.isGameOver()) {
+            RoomHandler.markRoomFinished(room)
             broadcast(room, buildGameEndMsg(game.getWinner()))
         } else {
             room.players.forEachIndexed { index, pl ->
                 pl.session.send(buildStateMsg(Protocol.TYPE_STATE, game, index))
             }
+            RoomHandler.touchRoom(room)
         }
     }
 

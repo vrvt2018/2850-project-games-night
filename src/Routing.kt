@@ -2,6 +2,7 @@
 // Defines all HTTP GET/POST routes for pages, auth, and API endpoints
 package com.example
 
+import com.example.network.RoomHandler
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.http.content.staticResources
@@ -29,6 +30,9 @@ fun Application.configureRouting() {
             if (!error.isNullOrBlank()) {
                 model["error"] = error
             }
+            val liveRooms = RoomHandler.getRoomStatusSnapshots()
+            model["liveRooms"] = liveRooms
+            model["hasLiveRooms"] = liveRooms.isNotEmpty()
             call.respondTemplate("login.peb", model = model)
         }
 
@@ -45,6 +49,7 @@ fun Application.configureRouting() {
 
         get("/games") {
             val user = call.request.cookies["AUTH_TOKEN"]?.let { getUsernameByToken(it) } ?: return@get call.respondRedirect("/")
+            val liveRooms = RoomHandler.getRoomStatusSnapshots()
             val gamesInfo = findAllGames().map {
                 mapOf(
                     "name" to it.name,
@@ -56,7 +61,9 @@ fun Application.configureRouting() {
                 "title" to "Games Catalogue",
                 "games" to gamesInfo,
                 "hasGames" to gamesInfo.isNotEmpty(),
-                "user" to user
+                "user" to user,
+                "liveRooms" to liveRooms,
+                "hasLiveRooms" to liveRooms.isNotEmpty(),
             )
             call.respondTemplate("gamelist.peb", model = model)
         }
@@ -93,12 +100,15 @@ fun Application.configureRouting() {
             val game = findGameByName(name) ?: return@get call.respondText("game not found", status = HttpStatusCode.NotFound)
             val user = call.request.cookies["AUTH_TOKEN"]?.let { getUsernameByToken(it) }
             val allGames = findAllGames().map { mapOf("name" to it.name, "maxPlayers" to it.maxPlayers) }
+            val liveRooms = RoomHandler.getRoomStatusSnapshots()
 
             val model = mutableMapOf(
                 "title" to game.name,
                 "game" to mapOf("name" to game.name, "maxPlayers" to game.maxPlayers),
                 "games" to allGames,
-                "hasGames" to allGames.isNotEmpty()
+                "hasGames" to allGames.isNotEmpty(),
+                "liveRooms" to liveRooms,
+                "hasLiveRooms" to liveRooms.isNotEmpty(),
             )
             if (user != null) model["user"] = user
             call.respondTemplate("gamelist.peb", model = model)

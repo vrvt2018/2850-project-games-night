@@ -8,3 +8,8 @@ suspend fun broadcast(
     room: Room,
     msg: String,
 ) = room.players.forEach { it.session.send(msg) }
+
+suspend fun broadcast(
+    players: Iterable<NetworkPlayer>,
+    msg: String,
+) = players.forEach { it.session.send(msg) }

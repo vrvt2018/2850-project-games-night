@@ -217,3 +217,148 @@ input:focus, select:focus {
   border: 2px solid var(--gn-primary);
   background: #2e3846;
 }
+
+/* Home page room status */
+.status-section {
+  margin-top: 2.5rem;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.room-status-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.5rem;
+}
+
+.room-status-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.room-status-code {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: white;
+}
+
+.room-status-empty {
+  text-align: left;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.status-pill.status-waiting {
+  background: rgba(59, 130, 246, 0.18);
+  color: #93c5fd;
+}
+
+.status-pill.status-live {
+  background: rgba(16, 185, 129, 0.18);
+  color: #6ee7b7;
+}
+
+.status-pill.status-finished {
+  background: rgba(249, 115, 22, 0.16);
+  color: #fdba74;
+}
+
+/* Shared room chat */
+.chat-panel {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+}
+
+.chat-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.chat-limit {
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+.chat-messages {
+  display: grid;
+  gap: 0.75rem;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.chat-message {
+  background: #253041;
+  border: 1px solid #374151;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+}
+
+.chat-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.chat-meta strong {
+  color: white;
+}
+
+.chat-meta span {
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+.chat-message p {
+  margin: 0;
+  color: #e5e7eb;
+  word-break: break-word;
+}
+
+.chat-empty {
+  border: 1px dashed #4b5563;
+  border-radius: 10px;
+  padding: 1rem;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.chat-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 640px) {
+  .chat-composer {
+    grid-template-columns: 1fr;
+  }
+
+  .room-status-top {
+    align-items: flex-start;
+  }
+}

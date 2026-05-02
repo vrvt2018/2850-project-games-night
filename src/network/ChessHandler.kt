@@ -69,16 +69,19 @@ object ChessHandler : GameSocketHandler() {
                 }
 
                 if (g.isGameOver()) {
+                    RoomHandler.markRoomFinished(r)
                     val winner = g.getWinner()
                     broadcast(r, """{"type":"GAME_END","winner":$winner,"reason":"capture"}""")
                 } else {
                     r.players.forEachIndexed { i, pl ->
                         pl.session.send(r.game!!.buildState("STATE", g, i))
                     }
+                    RoomHandler.touchRoom(r)
                 }
             }
 
             "CHESS_RESIGN" -> {
+                RoomHandler.markRoomFinished(r)
                 val winner = 1 - p.playerIndex
                 broadcast(r, """{"type":"GAME_END","winner":$winner,"reason":"resignation"}""")
             }

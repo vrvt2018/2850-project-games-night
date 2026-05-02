@@ -7,4 +7,5 @@ data class NetworkPlayer(
     val id: String,
     val session: DefaultWebSocketServerSession,
     val playerIndex: Int,
+    val username: String,
 )
