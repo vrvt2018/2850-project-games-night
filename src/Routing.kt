@@ -11,10 +11,10 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
-//fun Application.tryAutoRedirect()
-//{
+// fun Application.tryAutoRedirect()
+// {
 //
-//}
+// }
 
 fun Application.configureRouting() {
     routing {
@@ -50,21 +50,23 @@ fun Application.configureRouting() {
         get("/games") {
             val user = call.request.cookies["AUTH_TOKEN"]?.let { getUsernameByToken(it) } ?: return@get call.respondRedirect("/")
             val liveRooms = RoomHandler.getRoomStatusSnapshots()
-            val gamesInfo = findAllGames().map {
-                mapOf(
-                    "name" to it.name,
-                    "maxPlayers" to it.maxPlayers,
-                    "url" to "/games/" + it.name.replace(" ", "").lowercase()
+            val gamesInfo =
+                findAllGames().map {
+                    mapOf(
+                        "name" to it.name,
+                        "maxPlayers" to it.maxPlayers,
+                        "url" to "/games/" + it.name.replace(" ", "").lowercase(),
                     )
-            }
-            val model = mapOf(
-                "title" to "Games Catalogue",
-                "games" to gamesInfo,
-                "hasGames" to gamesInfo.isNotEmpty(),
-                "user" to user,
-                "liveRooms" to liveRooms,
-                "hasLiveRooms" to liveRooms.isNotEmpty(),
-            )
+                }
+            val model =
+                mapOf(
+                    "title" to "Games Catalogue",
+                    "games" to gamesInfo,
+                    "hasGames" to gamesInfo.isNotEmpty(),
+                    "user" to user,
+                    "liveRooms" to liveRooms,
+                    "hasLiveRooms" to liveRooms.isNotEmpty(),
+                )
             call.respondTemplate("gamelist.peb", model = model)
         }
 
@@ -73,7 +75,6 @@ fun Application.configureRouting() {
             val stats = getLeaderboard()
             call.respondTemplate("leaderboard.peb", mapOf("title" to "Leaderboard", "user" to user, "stats" to stats))
         }
-
 
         // Pages for each game
         get("/games/gofish") {
@@ -86,15 +87,15 @@ fun Application.configureRouting() {
             call.respondTemplate("chess.peb", mapOf("title" to "Chess Lobby", "user" to user))
         }
 
-
         get("/games/{name}") {
             val rawName = call.parameters["name"]
-            val name = rawName?.replace(" ", "")?.lowercase() ?: return@get call.respondText("game name required", status = HttpStatusCode.BadRequest)
-            
+            val name =
+                rawName?.replace(" ", "")?.lowercase()
+                    ?: return@get call.respondText("game name required", status = HttpStatusCode.BadRequest)
+
             // Redirect to game
             if (name == "gofish") return@get call.respondRedirect("/games/gofish")
             if (name == "chess") return@get call.respondRedirect("/games/chess")
-
 
             // Otherwise, if game not found...
             val game = findGameByName(name) ?: return@get call.respondText("game not found", status = HttpStatusCode.NotFound)
@@ -102,14 +103,15 @@ fun Application.configureRouting() {
             val allGames = findAllGames().map { mapOf("name" to it.name, "maxPlayers" to it.maxPlayers) }
             val liveRooms = RoomHandler.getRoomStatusSnapshots()
 
-            val model = mutableMapOf(
-                "title" to game.name,
-                "game" to mapOf("name" to game.name, "maxPlayers" to game.maxPlayers),
-                "games" to allGames,
-                "hasGames" to allGames.isNotEmpty(),
-                "liveRooms" to liveRooms,
-                "hasLiveRooms" to liveRooms.isNotEmpty(),
-            )
+            val model =
+                mutableMapOf(
+                    "title" to game.name,
+                    "game" to mapOf("name" to game.name, "maxPlayers" to game.maxPlayers),
+                    "games" to allGames,
+                    "hasGames" to allGames.isNotEmpty(),
+                    "liveRooms" to liveRooms,
+                    "hasLiveRooms" to liveRooms.isNotEmpty(),
+                )
             if (user != null) model["user"] = user
             call.respondTemplate("gamelist.peb", model = model)
         }
@@ -145,7 +147,7 @@ fun Application.configureRouting() {
             // Auto-login after signup
             val token = createSession(username)
             call.response.cookies.append(
-                Cookie("AUTH_TOKEN", token, maxAge = 3600, httpOnly = true, secure = false) // secure=false for localhost
+                Cookie("AUTH_TOKEN", token, maxAge = 3600, httpOnly = true, secure = false), // secure=false for localhost
             )
             call.respondRedirect("/games")
         }
@@ -160,7 +162,7 @@ fun Application.configureRouting() {
 
             val token = createSession(username)
             call.response.cookies.append(
-                Cookie("AUTH_TOKEN", token, maxAge = 3600, httpOnly = true, secure = false) // secure=false for localhost
+                Cookie("AUTH_TOKEN", token, maxAge = 3600, httpOnly = true, secure = false), // secure=false for localhost
             )
             call.respondRedirect("/games")
         }
@@ -176,7 +178,9 @@ fun Application.configureRouting() {
         // ──────────────────────────────────────────────────────────────────
 
         get("/api/auth/me") {
-            val username = call.request.cookies["AUTH_TOKEN"]?.let { getUsernameByToken(it) } ?: return@get call.respondText("not authenticated", status = HttpStatusCode.Unauthorized)
+            val username =
+                call.request.cookies["AUTH_TOKEN"]?.let { getUsernameByToken(it) }
+                    ?: return@get call.respondText("not authenticated", status = HttpStatusCode.Unauthorized)
             val email = getUserEmail(username) ?: "unknown"
             call.respond(mapOf("username" to username, "email" to email))
         }
@@ -193,7 +197,7 @@ fun Application.configureRouting() {
             val canonicalName = game.name.replace(" ", "").lowercase()
             call.respondRedirect("/games/$canonicalName")
         }
-        
+
         post("/api/history") {
             // Internal endpoint used by games to post result (in real app, use S2S or direct DB call)
             // For now, WebSocket servers will directly call recordGameResult() from Database.kt

@@ -30,18 +30,21 @@ object GoFishHandler : GameSocketHandler() {
         player: NetworkPlayer?,
         room: Room?,
     ) {
-        val r = room ?: run {
-            session.send(buildErrorMsg(Protocol.REASON_GAME_NOT_STARTED))
-            return
-        }
-        val g = r.game as? GoFish ?: run {
-            session.send(buildErrorMsg("Game type mismatch (not Go Fish)"))
-            return
-        }
-        val p = player ?: run {
-            session.send(buildErrorMsg("Player not found"))
-            return
-        }
+        val r =
+            room ?: run {
+                session.send(buildErrorMsg(Protocol.REASON_GAME_NOT_STARTED))
+                return
+            }
+        val g =
+            r.game as? GoFish ?: run {
+                session.send(buildErrorMsg("Game type mismatch (not Go Fish)"))
+                return
+            }
+        val p =
+            player ?: run {
+                session.send(buildErrorMsg("Player not found"))
+                return
+            }
 
         if (!r.started) {
             session.send(buildErrorMsg(Protocol.REASON_GAME_NOT_STARTED))
@@ -63,21 +66,27 @@ object GoFishHandler : GameSocketHandler() {
         game: GoFish,
         player: NetworkPlayer,
         room: Room,
-        session: DefaultWebSocketServerSession
+        session: DefaultWebSocketServerSession,
     ) {
         if (game.currentPlayer() != player.playerIndex) {
             session.send(buildErrorMsg(Protocol.REASON_NOT_YOUR_TURN))
             return
         }
 
-        val target = msg["target"]?.jsonPrimitive?.content?.toIntOrNull().takeIf { it in 0 until room.players.size } ?: run {
-            session.send(buildErrorMsg(Protocol.REASON_INVALID_TARGET))
-            return
-        }
-        val rank = msg["rank"]?.jsonPrimitive?.content?.takeIf { it.isNotBlank() } ?: run {
-            session.send(buildErrorMsg(Protocol.REASON_INVALID_RANK))
-            return
-        }
+        val target =
+            msg["target"]
+                ?.jsonPrimitive
+                ?.content
+                ?.toIntOrNull()
+                .takeIf { it in 0 until room.players.size } ?: run {
+                session.send(buildErrorMsg(Protocol.REASON_INVALID_TARGET))
+                return
+            }
+        val rank =
+            msg["rank"]?.jsonPrimitive?.content?.takeIf { it.isNotBlank() } ?: run {
+                session.send(buildErrorMsg(Protocol.REASON_INVALID_RANK))
+                return
+            }
 
         val askSuccess = game.askForCard(target, rank)
 
@@ -96,7 +105,7 @@ object GoFishHandler : GameSocketHandler() {
         game: GoFish,
         player: NetworkPlayer,
         room: Room,
-        session: DefaultWebSocketServerSession
+        session: DefaultWebSocketServerSession,
     ) {
         if (game.currentPlayer() != player.playerIndex) {
             session.send(buildErrorMsg(Protocol.REASON_NOT_YOUR_TURN))
@@ -116,44 +125,43 @@ object GoFishHandler : GameSocketHandler() {
         }
     }
 
-    private fun buildErrorMsg(reason: String): String {
-        return Json.encodeToString(
+    private fun buildErrorMsg(reason: String): String =
+        Json.encodeToString(
             mapOf(
                 "type" to Protocol.TYPE_ERROR,
-                "reason" to reason
-            )
+                "reason" to reason,
+            ),
         )
-    }
 
-    private fun buildGameEndMsg(winner: Int): String {
-        return Json.encodeToString(
+    private fun buildGameEndMsg(winner: Int): String =
+        Json.encodeToString(
             mapOf(
                 "type" to Protocol.TYPE_GAME_END,
-                "winner" to winner
-            )
+                "winner" to winner,
+            ),
         )
-    }
 
     private fun buildStateMsg(
         type: String,
         game: GoFish,
         playerIndex: Int,
-        askSuccess: Boolean? = null
+        askSuccess: Boolean? = null,
     ): String {
         val state = game.getState(playerIndex)
-        val stateMap = mutableMapOf<String, Any>(
-            "type" to type,
-            "turn" to state["turn"]!!,
-            "deckSize" to state["deckSize"]!!,
-            "numPlayers" to state["numPlayers"]!!,
-            "playerIndex" to playerIndex,
-            "gameOver" to state["gameOver"]!!,
-            "winner" to (state["winner"] ?: "null"),
-            "books" to state["books"]!!,
-            "handSizes" to state["handSizes"]!!,
-            "myHand" to state["myHand"]!!,
-            "myHandRanks" to state["myHandRanks"]!!
-        )
+        val stateMap =
+            mutableMapOf<String, Any>(
+                "type" to type,
+                "turn" to state["turn"]!!,
+                "deckSize" to state["deckSize"]!!,
+                "numPlayers" to state["numPlayers"]!!,
+                "playerIndex" to playerIndex,
+                "gameOver" to state["gameOver"]!!,
+                "winner" to (state["winner"] ?: "null"),
+                "books" to state["books"]!!,
+                "handSizes" to state["handSizes"]!!,
+                "myHand" to state["myHand"]!!,
+                "myHandRanks" to state["myHandRanks"]!!,
+            )
         askSuccess?.let { stateMap["success"] = it }
 
         return Json.encodeToString(stateMap)
