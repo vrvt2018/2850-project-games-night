@@ -4,16 +4,20 @@ package com.example
 
 import com.example.games.Game
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SchemaUtils.create
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.security.SecureRandom
 import java.util.regex.Pattern
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
 /** Represents a user account without sensitive auth data directly exposed to clients. */
-data class User(val username: String, val passwordHash: String, val email: String)
+data class User(
+    val username: String,
+    val passwordHash: String,
+    val email: String,
+)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Table definitions
@@ -51,8 +55,8 @@ object Games : Table("games") {
 object GameHistory : Table("game_history") {
     val id = integer("id").autoIncrement()
     val gameName = varchar("game_name", 64)
-    val winner = varchar("winner", 64)          // username of the winner
-    val players = varchar("players", 512)        // comma-separated usernames
+    val winner = varchar("winner", 64) // username of the winner
+    val players = varchar("players", 512) // comma-separated usernames
     val playedAt = long("played_at")
     override val primaryKey = PrimaryKey(id)
 }
@@ -72,13 +76,14 @@ fun initDatabase(testDbUrl: String? = null) {
 
     Database.connect(
         dbUrl,
-        driver = when {
-            dbUrl.startsWith("jdbc:postgresql") -> "org.postgresql.Driver"
-            dbUrl.startsWith("jdbc:h2") -> "org.h2.Driver"
-            else -> throw IllegalArgumentException("Unsupported DB URL: $dbUrl")
-        },
+        driver =
+            when {
+                dbUrl.startsWith("jdbc:postgresql") -> "org.postgresql.Driver"
+                dbUrl.startsWith("jdbc:h2") -> "org.h2.Driver"
+                else -> throw IllegalArgumentException("Unsupported DB URL: $dbUrl")
+            },
         user = dbUser,
-        password = dbPassword
+        password = dbPassword,
     )
 
     transaction {
@@ -88,8 +93,14 @@ fun initDatabase(testDbUrl: String? = null) {
         // Seed the games catalogue if empty
         if (Games.selectAll().empty()) {
             println("Seeding games catalogue...")
-            Games.insert { it[name] = "Go Fish"; it[maxPlayers] = 4 }
-            Games.insert { it[name] = "Chess"; it[maxPlayers] = 2 }
+            Games.insert {
+                it[name] = "Go Fish"
+                it[maxPlayers] = 4
+            }
+            Games.insert {
+                it[name] = "Chess"
+                it[maxPlayers] = 2
+            }
         } else {
             println("Games catalogue already contains: ${findAllGames().map { it.name }.joinToString(", ")}")
         }
@@ -117,8 +128,7 @@ fun isValidEmail(email: String): Boolean = EMAIL_PATTERN.matcher(email).matches(
  * Returns true if [password] meets the minimum requirements:
  * at least 8 characters, at least one digit, at least one letter.
  */
-fun isValidPassword(password: String): Boolean =
-    password.length >= 8 && password.any { it.isDigit() } && password.any { it.isLetter() }
+fun isValidPassword(password: String): Boolean = password.length >= 8 && password.any { it.isDigit() } && password.any { it.isLetter() }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Password hashing (HMAC-SHA256 with a static salt from env)
@@ -147,8 +157,12 @@ fun hashPassword(password: String): String {
  * Creates a new user account.
  * @return true on success; false if the username or email is already taken.
  */
-fun createUser(username: String, email: String, passwordHash: String): Boolean {
-    return transaction {
+fun createUser(
+    username: String,
+    email: String,
+    passwordHash: String,
+): Boolean =
+    transaction {
         if (Users.select { (Users.username eq username) or (Users.email eq email) }.any()) {
             false
         } else {
@@ -160,40 +174,42 @@ fun createUser(username: String, email: String, passwordHash: String): Boolean {
             true
         }
     }
-}
 
 /**
  * Looks up a user by [username] and returns a basic [User] object without the password hash.
  */
-fun findUserByUsername(username: String): User? {
-    return transaction {
-        Users.select { Users.username eq username }
+fun findUserByUsername(username: String): User? =
+    transaction {
+        Users
+            .select { Users.username eq username }
             .map { User(it[Users.username], "", it[Users.email]) }
             .singleOrNull()
     }
-}
 
 /**
  * Validates credentials and returns the matching [User], or null if invalid.
  */
-fun findUserByCredentials(username: String, passwordHash: String): User? {
-    return transaction {
-        Users.select { (Users.username eq username) and (Users.passwordHash eq passwordHash) }
+fun findUserByCredentials(
+    username: String,
+    passwordHash: String,
+): User? =
+    transaction {
+        Users
+            .select { (Users.username eq username) and (Users.passwordHash eq passwordHash) }
             .map { User(it[Users.username], "", it[Users.email]) }
             .singleOrNull()
     }
-}
 
 /**
  * Returns the email address for [username], or null if the user does not exist.
  */
-fun getUserEmail(username: String): String? {
-    return transaction {
-        Users.select { Users.username eq username }
+fun getUserEmail(username: String): String? =
+    transaction {
+        Users
+            .select { Users.username eq username }
             .map { it[Users.email] }
             .singleOrNull()
     }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Session management
@@ -223,13 +239,13 @@ fun createSession(username: String): String {
 /**
  * Returns the username associated with [token], or null if the session does not exist.
  */
-fun getUsernameByToken(token: String): String? {
-    return transaction {
-        Sessions.select { Sessions.token eq token }
+fun getUsernameByToken(token: String): String? =
+    transaction {
+        Sessions
+            .select { Sessions.token eq token }
             .map { it[Sessions.username] }
             .singleOrNull()
     }
-}
 
 /**
  * Deletes the session identified by [sessionToken] (used during logout).
@@ -244,28 +260,31 @@ fun deleteSession(sessionToken: String) {
 // Game catalogue
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Lightweight DTO representing a game catalogue entry. */ // Who wrote these comments??
-data class GameInfo(val name: String, val maxPlayers: Int)
+/** Lightweight DTO representing a game catalogue entry. */
+// Who wrote these comments??
+data class GameInfo(
+    val name: String,
+    val maxPlayers: Int,
+)
 
 /**
  * Returns all games currently registered in the catalogue.
  */
-fun findAllGames(): List<GameInfo> {
-    return transaction {
+fun findAllGames(): List<GameInfo> =
+    transaction {
         Games.selectAll().map { GameInfo(it[Games.name], it[Games.maxPlayers]) }
     }
-}
 
 /**
  * Finds a game by [name] (case-insensitive).
  */
-fun findGameByName(name: String): GameInfo? {
-    return transaction {
-        Games.select { Games.name.lowerCase() eq name.lowercase() }
+fun findGameByName(name: String): GameInfo? =
+    transaction {
+        Games
+            .select { Games.name.lowerCase() eq name.lowercase() }
             .map { GameInfo(it[Games.name], it[Games.maxPlayers]) }
             .singleOrNull()
     }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Game history / Leaderboard (extension feature)
@@ -277,7 +296,11 @@ fun findGameByName(name: String): GameInfo? {
  * @param winner    Username of the winning player (or "" for a draw).
  * @param players   List of all participating usernames.
  */
-fun recordGameResult(gameName: String, winner: String, players: List<String>) {
+fun recordGameResult(
+    gameName: String,
+    winner: String,
+    players: List<String>,
+) {
     transaction {
         GameHistory.insert {
             it[GameHistory.gameName] = gameName
@@ -289,24 +312,29 @@ fun recordGameResult(gameName: String, winner: String, players: List<String>) {
 }
 
 /** Represents a leaderboard entry for a single player. */
-data class LeaderboardEntry(val username: String, val wins: Int, val gamesPlayed: Int)
+data class LeaderboardEntry(
+    val username: String,
+    val wins: Int,
+    val gamesPlayed: Int,
+)
 
 /**
  * Returns leaderboard data: each player's total wins and games played, ordered by wins descending.
  */
-fun getLeaderboard(): List<LeaderboardEntry> {
-    return transaction {
+fun getLeaderboard(): List<LeaderboardEntry> =
+    transaction {
         val allHistory = GameHistory.selectAll().toList()
         // Gather all unique players
-        val players = allHistory
-            .flatMap { it[GameHistory.players].split(",") }
-            .map { it.trim() }
-            .filter { it.isNotBlank() }
-            .toSet()
-        players.map { username ->
-            val played = allHistory.count { username in it[GameHistory.players].split(",") }
-            val wins = allHistory.count { it[GameHistory.winner] == username }
-            LeaderboardEntry(username, wins, played)
-        }.sortedByDescending { it.wins }
+        val players =
+            allHistory
+                .flatMap { it[GameHistory.players].split(",") }
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+                .toSet()
+        players
+            .map { username ->
+                val played = allHistory.count { username in it[GameHistory.players].split(",") }
+                val wins = allHistory.count { it[GameHistory.winner] == username }
+                LeaderboardEntry(username, wins, played)
+            }.sortedByDescending { it.wins }
     }
-}

@@ -1,4 +1,5 @@
 package com.example.games
+
 /**
 * Go Fish card game engine.
 *
@@ -8,7 +9,6 @@ package com.example.games
 * player can make a move.
 */
 class GoFish : Game("Go Fish", 4, 2) {
-
     private val deck = Deck()
     private val drawPile = mutableListOf<Card>()
     private val hands = mutableListOf<MutableList<Card>>()
@@ -50,7 +50,11 @@ class GoFish : Game("Go Fish", 4, 2) {
 
     fun currentPlayer(): Int = turn
 
-    override fun buildState(type: String, game: Game, playerIndex: Int): String {
+    override fun buildState(
+        type: String,
+        game: Game,
+        playerIndex: Int,
+    ): String {
         val state = game.getState(playerIndex)
         val myHand = (state["myHand"] as List<*>).joinToString("\",\"", "\"", "\"")
         val myHandRanks = (state["myHandRanks"] as List<*>).joinToString("\",\"", "\"", "\"")
@@ -71,7 +75,10 @@ class GoFish : Game("Go Fish", 4, 2) {
         }
     }
 
-    fun askForCard(targetPlayer: Int, rank: String): Boolean {
+    fun askForCard(
+        targetPlayer: Int,
+        rank: String,
+    ): Boolean {
         if (isGameOver()) return false
         if (targetPlayer !in 0 until numPlayers || targetPlayer == turn) return false
 
@@ -153,7 +160,7 @@ class GoFish : Game("Go Fish", 4, 2) {
             "books" to books.toList(),
             "handSizes" to hands.map { it.size },
             "myHand" to myHand,
-            "myHandRanks" to myHandRanks
+            "myHandRanks" to myHandRanks,
         )
     }
 }

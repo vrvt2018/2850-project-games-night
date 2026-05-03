@@ -18,8 +18,10 @@ enum class PictureCard { Jack, Queen, King }
  * @param suit The suit of the card (Hearts, Diamonds, Spades, Clubs).
  * @param _rank Internal integer rank (1-13). 1=Ace, 11=Jack, 12=Queen, 13=King.
  */
-class Card(val suit: Suit, private val _rank: Int) {
-
+class Card(
+    val suit: Suit,
+    private val _rank: Int,
+) {
     /**
      * The rank of this card: an Int (1-10) for numbered cards, or a [PictureCard] for face cards.
      * Ace is represented as 1.
@@ -30,25 +32,27 @@ class Card(val suit: Suit, private val _rank: Int) {
     /**
      * Human-readable rank string for WebSocket messaging (e.g. "A", "Jack", "7").
      */
-    fun rankString(): String = when (_rank) {
-        1 -> "A"
-        11 -> "Jack"
-        12 -> "Queen"
-        13 -> "King"
-        else -> _rank.toString()
-    }
+    fun rankString(): String =
+        when (_rank) {
+            1 -> "A"
+            11 -> "Jack"
+            12 -> "Queen"
+            13 -> "King"
+            else -> _rank.toString()
+        }
 
     /**
      * Returns the URL to this card's image asset from a reliable CDN.
      */
     fun imageUrl(): String {
-        val rankPart = when (_rank) {
-            1 -> "ace"
-            11 -> "jack"
-            12 -> "queen"
-            13 -> "king"
-            else -> _rank.toString()
-        }
+        val rankPart =
+            when (_rank) {
+                1 -> "ace"
+                11 -> "jack"
+                12 -> "queen"
+                13 -> "king"
+                else -> _rank.toString()
+            }
         return "https://raw.githubusercontent.com/hayeah/playing-cards-assets/master/png/${rankPart}_of_${suit.name.lowercase()}.png"
     }
 

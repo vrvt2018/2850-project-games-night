@@ -19,8 +19,9 @@ package com.example.games
  * Piece key:
  *   K/k = King, Q/q = Queen, R/r = Rook, B/b = Bishop, N/n = Knight, P/p = Pawn
  */
-class Chess(name: String = "Chess") : Game(name, 2, 2) {
-
+class Chess(
+    name: String = "Chess",
+) : Game(name, 2, 2) {
     /** Flat 64-element board. '.' means empty square. */
     private val board: CharArray = CharArray(64) { '.' }
 
@@ -61,7 +62,7 @@ class Chess(name: String = "Chess") : Game(name, 2, 2) {
         for (i in 16..47) board[i] = '.'
         for (col in 0..7) board[48 + col] = 'P'
         for (col in 0..7) board[56 + col] = backRow[col].uppercaseChar()
-        
+
         whiteKingMoved = false
         blackKingMoved = false
         whiteRookAMoved = false
@@ -77,7 +78,10 @@ class Chess(name: String = "Chess") : Game(name, 2, 2) {
     // Move logic
     // ─────────────────────────────────────────────────────────────────────────
 
-    fun makeMove(from: Int, to: Int): Boolean {
+    fun makeMove(
+        from: Int,
+        to: Int,
+    ): Boolean {
         if (from !in 0..63 || to !in 0..63 || from == to) return false
         val piece = board[from]
         if (piece == '.') return false
@@ -94,10 +98,22 @@ class Chess(name: String = "Chess") : Game(name, 2, 2) {
 
         // Handle Castling Execution (King moved 2 squares)
         if (piece.lowercaseChar() == 'k' && kotlin.math.abs(from - to) == 2) {
-            if (to == 62) { board[61] = 'R'; board[63] = '.' } // White Kingside
-            else if (to == 58) { board[59] = 'R'; board[56] = '.' } // White Queenside
-            else if (to == 6) { board[5] = 'r'; board[7] = '.' } // Black Kingside
-            else if (to == 2) { board[3] = 'r'; board[0] = '.' } // Black Queenside
+            if (to == 62) {
+                board[61] = 'R'
+                board[63] = '.'
+            } // White Kingside
+            else if (to == 58) {
+                board[59] = 'R'
+                board[56] = '.'
+            } // White Queenside
+            else if (to == 6) {
+                board[5] = 'r'
+                board[7] = '.'
+            } // Black Kingside
+            else if (to == 2) {
+                board[3] = 'r'
+                board[0] = '.'
+            } // Black Queenside
         }
 
         // Handle En Passant Execution
@@ -142,7 +158,10 @@ class Chess(name: String = "Chess") : Game(name, 2, 2) {
         return true
     }
 
-    private fun isMoveLegalStrict(from: Int, to: Int): Boolean {
+    private fun isMoveLegalStrict(
+        from: Int,
+        to: Int,
+    ): Boolean {
         if (!makeMoveDryRun(from, to, board, enPassantTarget)) return false
 
         val tempBoard = board.copyOf()
@@ -153,10 +172,19 @@ class Chess(name: String = "Chess") : Game(name, 2, 2) {
 
         // Apply Castling on temp board
         if (piece.lowercaseChar() == 'k' && kotlin.math.abs(from - to) == 2) {
-            if (to == 62) { tempBoard[61] = 'R'; tempBoard[63] = '.' }
-            else if (to == 58) { tempBoard[59] = 'R'; tempBoard[56] = '.' }
-            else if (to == 6) { tempBoard[5] = 'r'; tempBoard[7] = '.' }
-            else if (to == 2) { tempBoard[3] = 'r'; tempBoard[0] = '.' }
+            if (to == 62) {
+                tempBoard[61] = 'R'
+                tempBoard[63] = '.'
+            } else if (to == 58) {
+                tempBoard[59] = 'R'
+                tempBoard[56] = '.'
+            } else if (to == 6) {
+                tempBoard[5] = 'r'
+                tempBoard[7] = '.'
+            } else if (to == 2) {
+                tempBoard[3] = 'r'
+                tempBoard[0] = '.'
+            }
         }
 
         // Apply En Passant on temp board
@@ -168,11 +196,15 @@ class Chess(name: String = "Chess") : Game(name, 2, 2) {
         val isWhite = turn == 0
         val kingChar = if (isWhite) 'K' else 'k'
         val kingPos = tempBoard.indexOfFirst { it == kingChar }
-        
+
         return kingPos != -1 && !isAttacked(kingPos, !isWhite, tempBoard)
     }
 
-    private fun isAttacked(target: Int, byWhite: Boolean, checkBoard: CharArray): Boolean {
+    private fun isAttacked(
+        target: Int,
+        byWhite: Boolean,
+        checkBoard: CharArray,
+    ): Boolean {
         for (i in 0..63) {
             val p = checkBoard[i]
             if (p == '.') continue
@@ -205,7 +237,13 @@ class Chess(name: String = "Chess") : Game(name, 2, 2) {
         return false
     }
 
-    private fun isLegalMove(piece: Char, from: Int, to: Int, checkBoard: CharArray, epTarget: Int): Boolean {
+    private fun isLegalMove(
+        piece: Char,
+        from: Int,
+        to: Int,
+        checkBoard: CharArray,
+        epTarget: Int,
+    ): Boolean {
         val fromRow = from / 8
         val fromCol = from % 8
         val toRow = to / 8
@@ -214,77 +252,143 @@ class Chess(name: String = "Chess") : Game(name, 2, 2) {
         val dc = toCol - fromCol
 
         return when (piece.lowercaseChar()) {
-            'p' -> isLegalPawnMove(piece, fromRow, fromCol, toRow, toCol, dr, dc, checkBoard, epTarget)
-            'r' -> isLegalRookMove(fromRow, fromCol, toRow, toCol, dr, dc, checkBoard)
-            'n' -> isLegalKnightMove(dr, dc)
-            'b' -> isLegalBishopMove(fromRow, fromCol, toRow, toCol, dr, dc, checkBoard)
-            'q' -> isLegalRookMove(fromRow, fromCol, toRow, toCol, dr, dc, checkBoard) ||
+            'p' -> {
+                isLegalPawnMove(piece, fromRow, fromCol, toRow, toCol, dr, dc, checkBoard, epTarget)
+            }
+
+            'r' -> {
+                isLegalRookMove(fromRow, fromCol, toRow, toCol, dr, dc, checkBoard)
+            }
+
+            'n' -> {
+                isLegalKnightMove(dr, dc)
+            }
+
+            'b' -> {
+                isLegalBishopMove(fromRow, fromCol, toRow, toCol, dr, dc, checkBoard)
+            }
+
+            'q' -> {
+                isLegalRookMove(fromRow, fromCol, toRow, toCol, dr, dc, checkBoard) ||
                     isLegalBishopMove(fromRow, fromCol, toRow, toCol, dr, dc, checkBoard)
-            'k' -> isLegalKingMove(piece, from, to, dr, dc, checkBoard)
-            else -> false
+            }
+
+            'k' -> {
+                isLegalKingMove(piece, from, to, dr, dc, checkBoard)
+            }
+
+            else -> {
+                false
+            }
         }
     }
 
     private fun isLegalPawnMove(
-        piece: Char, fromRow: Int, fromCol: Int, toRow: Int, toCol: Int, 
-        dr: Int, dc: Int, checkBoard: CharArray, epTarget: Int
+        piece: Char,
+        fromRow: Int,
+        fromCol: Int,
+        toRow: Int,
+        toCol: Int,
+        dr: Int,
+        dc: Int,
+        checkBoard: CharArray,
+        epTarget: Int,
     ): Boolean {
         val isWhite = piece == 'P'
         val direction = if (isWhite) -1 else 1
         val startRow = if (isWhite) 6 else 1
 
         return when {
-            dr == direction && dc == 0 && checkBoard[toRow * 8 + toCol] == '.' -> true
-            dr == 2 * direction && dc == 0 && fromRow == startRow
-                    && checkBoard[toRow * 8 + toCol] == '.'
-                    && checkBoard[(fromRow + direction) * 8 + fromCol] == '.' -> true
+            dr == direction && dc == 0 && checkBoard[toRow * 8 + toCol] == '.' -> {
+                true
+            }
+
+            dr == 2 * direction && dc == 0 && fromRow == startRow &&
+                checkBoard[toRow * 8 + toCol] == '.' &&
+                checkBoard[(fromRow + direction) * 8 + fromCol] == '.' -> {
+                true
+            }
+
             // Capture or En Passant
             dr == direction && kotlin.math.abs(dc) == 1 -> {
                 val toIdx = toRow * 8 + toCol
                 checkBoard[toIdx] != '.' || toIdx == epTarget
             }
-            else -> false
+
+            else -> {
+                false
+            }
         }
     }
 
-    private fun isLegalRookMove(fromRow: Int, fromCol: Int, toRow: Int, toCol: Int, dr: Int, dc: Int, checkBoard: CharArray): Boolean {
+    private fun isLegalRookMove(
+        fromRow: Int,
+        fromCol: Int,
+        toRow: Int,
+        toCol: Int,
+        dr: Int,
+        dc: Int,
+        checkBoard: CharArray,
+    ): Boolean {
         if (dr != 0 && dc != 0) return false
         return isPathClear(fromRow, fromCol, toRow, toCol, checkBoard)
     }
 
-    private fun isLegalKnightMove(dr: Int, dc: Int): Boolean {
+    private fun isLegalKnightMove(
+        dr: Int,
+        dc: Int,
+    ): Boolean {
         val absDr = kotlin.math.abs(dr)
         val absDc = kotlin.math.abs(dc)
         return (absDr == 2 && absDc == 1) || (absDr == 1 && absDc == 2)
     }
 
-    private fun isLegalBishopMove(fromRow: Int, fromCol: Int, toRow: Int, toCol: Int, dr: Int, dc: Int, checkBoard: CharArray): Boolean {
+    private fun isLegalBishopMove(
+        fromRow: Int,
+        fromCol: Int,
+        toRow: Int,
+        toCol: Int,
+        dr: Int,
+        dc: Int,
+        checkBoard: CharArray,
+    ): Boolean {
         if (kotlin.math.abs(dr) != kotlin.math.abs(dc)) return false
         return isPathClear(fromRow, fromCol, toRow, toCol, checkBoard)
     }
 
-    private fun isLegalKingMove(piece: Char, from: Int, to: Int, dr: Int, dc: Int, checkBoard: CharArray): Boolean {
+    private fun isLegalKingMove(
+        piece: Char,
+        from: Int,
+        to: Int,
+        dr: Int,
+        dc: Int,
+        checkBoard: CharArray,
+    ): Boolean {
         // Standard Move
         if (kotlin.math.abs(dr) <= 1 && kotlin.math.abs(dc) <= 1) return true
-        
+
         // Castling
         val isWhite = isWhitePiece(piece)
         if (dr == 0 && kotlin.math.abs(dc) == 2) {
             // Cannot castle out of, through, or into check
             if (isAttacked(from, !isWhite, checkBoard)) return false
-            
+
             if (isWhite && from == 60) {
                 if (to == 62 && !whiteKingMoved && !whiteRookHMoved && checkBoard[61] == '.' && checkBoard[62] == '.') {
                     if (!isAttacked(61, !isWhite, checkBoard)) return true
                 }
-                if (to == 58 && !whiteKingMoved && !whiteRookAMoved && checkBoard[59] == '.' && checkBoard[58] == '.' && checkBoard[57] == '.') {
+                if (to == 58 && !whiteKingMoved && !whiteRookAMoved && checkBoard[59] == '.' && checkBoard[58] == '.' &&
+                    checkBoard[57] == '.'
+                ) {
                     if (!isAttacked(59, !isWhite, checkBoard)) return true
                 }
             } else if (!isWhite && from == 4) {
                 if (to == 6 && !blackKingMoved && !blackRookHMoved && checkBoard[5] == '.' && checkBoard[6] == '.') {
                     if (!isAttacked(5, !isWhite, checkBoard)) return true
                 }
-                if (to == 2 && !blackKingMoved && !blackRookAMoved && checkBoard[3] == '.' && checkBoard[2] == '.' && checkBoard[1] == '.') {
+                if (to == 2 && !blackKingMoved && !blackRookAMoved && checkBoard[3] == '.' && checkBoard[2] == '.' &&
+                    checkBoard[1] == '.'
+                ) {
                     if (!isAttacked(3, !isWhite, checkBoard)) return true
                 }
             }
@@ -292,7 +396,13 @@ class Chess(name: String = "Chess") : Game(name, 2, 2) {
         return false
     }
 
-    private fun isPathClear(fromRow: Int, fromCol: Int, toRow: Int, toCol: Int, checkBoard: CharArray): Boolean {
+    private fun isPathClear(
+        fromRow: Int,
+        fromCol: Int,
+        toRow: Int,
+        toCol: Int,
+        checkBoard: CharArray,
+    ): Boolean {
         val stepRow = Integer.signum(toRow - fromRow)
         val stepCol = Integer.signum(toCol - fromCol)
         var r = fromRow + stepRow
@@ -313,19 +423,23 @@ class Chess(name: String = "Chess") : Game(name, 2, 2) {
 
     override fun getWinner(): Int = winner
 
-    override fun getState(playerIndex: Int): Map<String, Any?> = mapOf(
-        "board" to board.concatToString(),
-        "turn" to turn,
-        "gameOver" to isGameOver(),
-        "winner" to if (isGameOver()) winner else null,
-        "playerIndex" to playerIndex
-    )
+    override fun getState(playerIndex: Int): Map<String, Any?> =
+        mapOf(
+            "board" to board.concatToString(),
+            "turn" to turn,
+            "gameOver" to isGameOver(),
+            "winner" to if (isGameOver()) winner else null,
+            "playerIndex" to playerIndex,
+        )
 
-    fun legalMovesFrom(from: Int): List<Int> {
-        return (0..63).filter { to -> isMoveLegalStrict(from, to) }
-    }
+    fun legalMovesFrom(from: Int): List<Int> = (0..63).filter { to -> isMoveLegalStrict(from, to) }
 
-    private fun makeMoveDryRun(from: Int, to: Int, checkBoard: CharArray, epTarget: Int): Boolean {
+    private fun makeMoveDryRun(
+        from: Int,
+        to: Int,
+        checkBoard: CharArray,
+        epTarget: Int,
+    ): Boolean {
         if (from !in 0..63 || to !in 0..63 || from == to) return false
         val piece = checkBoard[from]
         if (piece == '.') return false
@@ -337,7 +451,11 @@ class Chess(name: String = "Chess") : Game(name, 2, 2) {
 
     // Build the state for networking
     // Needed in this class because it's unique to the game - could also put in handler
-    override fun buildState(type: String, game: Game, playerIndex: Int): String {
+    override fun buildState(
+        type: String,
+        game: Game,
+        playerIndex: Int,
+    ): String {
         // askSuccess only required in GoFish
         val state = game.getState(playerIndex)
         return buildString {

@@ -7,7 +7,7 @@ import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.send
 import kotlinx.serialization.json.*
 
-// This is obviously AI-generated.
+// This description is obviously AI-generated. :-(
 
 /**
  * WebSocket handler for the Chess game.
