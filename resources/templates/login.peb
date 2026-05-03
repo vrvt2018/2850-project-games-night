@@ -31,3 +31,70 @@
     </p>
   </div>
 </section>
+{% extends "base.peb" %}
+{% block title %}Login - Games Night{% endblock %}
+{% block content %}
+<section style="display:flex;justify-content:center;">
+  <div class="card" style="max-width:420px;width:100%;">
+    <h1 style="margin-top:0;font-size:1.8rem;">Login to Games Night</h1>
+    <p style="color:#9ca3af;margin-bottom:2rem;">Enter your account and join a multiplayer game in seconds.</p>
+
+    <form action="/login" method="post" style="display:grid;gap:0.8rem;">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" required placeholder="your-username" autocomplete="username">
+
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required placeholder="••••••••" autocomplete="current-password">
+
+      <button type="submit" style="margin-top:1rem;width:100%;">Login</button>
+    </form>
+
+    {% if error is defined and error %}
+      <div class="error-msg" style="margin-top:1.5rem;" role="alert">
+        {% if error == 'invalid_credentials' %}
+          Invalid username or password. Please try again.
+        {% else %}
+          An error occurred. Please try again.
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <p style="margin-top:2rem;font-size:0.9rem;text-align:center;">
+      New here? <a href="/signup" style="color:var(--gn-primary)">Create an account</a> and start playing.
+    </p>
+  </div>
+</section>
+
+<section class="status-section" id="roomStatusSection">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;">
+    <div>
+      <h2 style="margin:0;color:white;">Current Match Status</h2>
+      <p style="margin:0.35rem 0 0;color:#9ca3af;">See which rooms are waiting for players and which tables are already live.</p>
+    </div>
+  </div>
+
+  <div id="roomStatusList" class="status-grid" {% if not hasLiveRooms %}style="display:none;"{% endif %}>
+    {% if hasLiveRooms %}
+      {% for room in liveRooms %}
+        <article class="card room-status-card">
+          <div class="room-status-top">
+            <span class="status-pill {{ room.statusTone }}">{{ room.statusLabel }}</span>
+            <strong style="color:white;">{{ room.gameName }}</strong>
+          </div>
+          <div class="room-status-code">Room {{ room.roomId }}</div>
+          <p style="margin:0;color:#d1d5db;">{{ room.playerSummary }}</p>
+          <p style="margin:0;color:#9ca3af;">Host: {{ room.hostUsername }}</p>
+          <p style="margin:0;color:#9ca3af;">Players: {{ room.playerNamesDisplay }}</p>
+          <p style="margin:0;color:#6b7280;font-size:0.9rem;">{{ room.updatedAtLabel }}</p>
+        </article>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <div id="roomStatusEmpty" class="card room-status-empty" {% if hasLiveRooms %}style="display:none;"{% endif %}>
+    <h3 style="margin:0 0 0.5rem;color:white;">No active rooms right now</h3>
+    <p style="margin:0;color:#9ca3af;">Create an account, open a lobby, and the room status will appear here.</p>
+  </div>
+</section>
+<script src="/resources/room-status.js"></script>
+{% endblock %}
