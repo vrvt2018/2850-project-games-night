@@ -1,4 +1,4 @@
-{% extends "base.peb" %}
+{{% extends "base.peb" %}
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
 <section>
@@ -45,6 +45,23 @@
     <br>
     <button id="btnStart" class="button" style="display:none;margin:0 auto;width:250px;" onclick="startGame()">Start Game</button>
     <p id="waitingMessage" style="color:#9ca3af;display:none;">Waiting for host to start...</p>
+  </div>
+
+  <div id="chatContainer" class="card chat-panel" style="display:none;">
+    <div class="chat-panel-header">
+      <div>
+        <h3 style="margin:0;color:white;">Table Chat</h3>
+        <p style="margin:0.35rem 0 0;color:#9ca3af;">Coordinate card calls and table chatter in one place.</p>
+      </div>
+      <span class="chat-limit">280 chars</span>
+    </div>
+    <div id="chatMessages" class="chat-messages">
+      <div class="chat-empty">No messages yet. Use chat while the room fills up.</div>
+    </div>
+    <div class="chat-composer">
+      <input type="text" id="chatInput" maxlength="280" placeholder="Type a message for the room" autocomplete="off" style="margin-bottom:0;">
+      <button id="btnChatSend" class="button" type="button" onclick="sendChatMessage()">Send</button>
+    </div>
   </div>
 
   <!-- Active Game Area -->

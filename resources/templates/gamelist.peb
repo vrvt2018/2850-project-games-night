@@ -7,6 +7,38 @@
     <p style="color:#9ca3af;font-size:1.1rem;">Welcome back, <strong>{{ user }}</strong>! Choose a game below to host or join a lobby.</p>
   </div>
 
+  <section class="status-section" id="roomStatusSection" style="margin-bottom:2.5rem;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;">
+      <div>
+        <h2 style="margin:0;color:white;">Current Match Status</h2>
+        <p style="margin:0.35rem 0 0;color:#9ca3af;">Track rooms that are waiting for players, already in progress, or recently finished.</p>
+      </div>
+    </div>
+
+    <div id="roomStatusList" class="status-grid" {% if not hasLiveRooms %}style="display:none;"{% endif %}>
+      {% if hasLiveRooms %}
+        {% for room in liveRooms %}
+          <article class="card room-status-card">
+            <div class="room-status-top">
+              <span class="status-pill {{ room.statusTone }}">{{ room.statusLabel }}</span>
+              <strong style="color:white;">{{ room.gameName }}</strong>
+            </div>
+            <div class="room-status-code">Room {{ room.roomId }}</div>
+            <p style="margin:0;color:#d1d5db;">{{ room.playerSummary }}</p>
+            <p style="margin:0;color:#9ca3af;">Host: {{ room.hostUsername }}</p>
+            <p style="margin:0;color:#9ca3af;">Players: {{ room.playerNamesDisplay }}</p>
+            <p style="margin:0;color:#6b7280;font-size:0.9rem;">{{ room.updatedAtLabel }}</p>
+          </article>
+        {% endfor %}
+      {% endif %}
+    </div>
+
+    <div id="roomStatusEmpty" class="card room-status-empty" {% if hasLiveRooms %}style="display:none;"{% endif %}>
+      <h3 style="margin:0 0 0.5rem;color:white;">No live rooms yet</h3>
+      <p style="margin:0;color:#9ca3af;">Start a chess or Go Fish lobby and it will show up here.</p>
+    </div>
+  </section>
+
   {% if hasGames %}
     <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:2rem;">
       {% for game in games %}
@@ -30,4 +62,5 @@
     </div>
   {% endif %}
 </section>
+<script src="/resources/room-status.js"></script>
 {% endblock %}
