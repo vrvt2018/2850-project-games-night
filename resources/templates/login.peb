@@ -31,37 +31,3 @@
     </p>
   </div>
 </section>
-
-<section class="status-section" id="roomStatusSection">
-  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;">
-    <div>
-      <h2 style="margin:0;color:white;">Current Match Status</h2>
-      <p style="margin:0.35rem 0 0;color:#9ca3af;">See which rooms are waiting for players and which tables are already live.</p>
-    </div>
-  </div>
-
-  <div id="roomStatusList" class="status-grid" {% if not hasLiveRooms %}style="display:none;"{% endif %}>
-    {% if hasLiveRooms %}
-      {% for room in liveRooms %}
-        <article class="card room-status-card">
-          <div class="room-status-top">
-            <span class="status-pill {{ room.statusTone }}">{{ room.statusLabel }}</span>
-            <strong style="color:white;">{{ room.gameName }}</strong>
-          </div>
-          <div class="room-status-code">Room {{ room.roomId }}</div>
-          <p style="margin:0;color:#d1d5db;">{{ room.playerSummary }}</p>
-          <p style="margin:0;color:#9ca3af;">Host: {{ room.hostUsername }}</p>
-          <p style="margin:0;color:#9ca3af;">Players: {{ room.playerNamesDisplay }}</p>
-          <p style="margin:0;color:#6b7280;font-size:0.9rem;">{{ room.updatedAtLabel }}</p>
-        </article>
-      {% endfor %}
-    {% endif %}
-  </div>
-
-  <div id="roomStatusEmpty" class="card room-status-empty" {% if hasLiveRooms %}style="display:none;"{% endif %}>
-    <h3 style="margin:0 0 0.5rem;color:white;">No active rooms right now</h3>
-    <p style="margin:0;color:#9ca3af;">Create an account, open a lobby, and the room status will appear here.</p>
-  </div>
-</section>
-<script src="/resources/room-status.js"></script>
-{% endblock %}
