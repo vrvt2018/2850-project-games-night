@@ -25,8 +25,8 @@ body {
   position: absolute;
   top: -40px;
   left: 0;
-  background: var(--gn-primary);
-  color: white;
+  background: #410AC2; /*var(--gn-primary); <- commented out original colour, WCAG 2 AA fix*/
+  color: #6ee7b7; /* WCAG 2 AA contrast fix - Andy */
   padding: 8px;
   z-index: 100;
   transition: top 0.2s;
@@ -102,7 +102,8 @@ body {
 
 /* Buttons */
 button, .button {
-  background-color: var(--gn-primary) !important;
+  background-color: #410AC2; /*var(--gn-primary) !important; <- original colour, WCAG 2 AA Fix*/
+  color:  #6ee7b7; /* WCAG 2 AA Fix */
   border: none !important;
   transition: background-color 0.2s, transform 0.1s !important;
 }
