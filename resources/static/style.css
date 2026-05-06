@@ -114,7 +114,8 @@ button:hover, .button:hover {
 .btn-outline {
   background-color: transparent !important;
   border: 2px solid var(--gn-primary) !important;
-  color: var(--gn-primary) !important;
+  /* WCAG AA 2 fix 06/05/2026 */
+  color: white /*var(--gn-primary) !important;*/
 }
 .btn-outline:hover {
   background-color: var(--gn-primary) !important;

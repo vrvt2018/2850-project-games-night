@@ -5,10 +5,10 @@
 <script src="/resources/lobby.js"></script> {# All games need lobby code #}
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
     <h1>Chess</h1>
-    <a href="/games" class="button btn-outline">Back to Games</a>
+    <a href="/games" class="button btn-outline" style="border: none !important;">Back to Games</a> {# Changed this to be just a button without btn-outline tag #}
   </div>
 
-{# Most likely AI assisted #}
+{# Most likely AI assisted by whoever pushed this #}
   <div id="lobby" class="card">
     <h2 style="margin-top:0;">Lobby</h2>
     <div class="lobby-panel">
