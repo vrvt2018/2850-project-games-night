@@ -141,6 +141,14 @@ input:focus, select:focus {
   border: 1px solid #b91c1c;
 }
 
+/* Shared by both log-in and sign-up to display text at the bottom of their forms */
+.switch-auth {
+  margin-top:2rem;
+  /*font-size:0.9rem !important;*/
+  text-align:center;
+  font-size: 130% !important; /* This fixes the WCAG contrast violation */
+}
+
 /* Footer */
 .footer {
   text-align: center;

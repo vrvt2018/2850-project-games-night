@@ -35,7 +35,7 @@
       </div>
     {% endif %}
 
-    <p style="margin-top:1.5rem;font-size:0.9rem;text-align:center;">
+    <p class="switch-auth"> {# New style made to avoid repeating WCAG fix #}
       Already have an account? <a href="/" style="color:var(--gn-primary)">Login</a>.
     </p>
   </div>
