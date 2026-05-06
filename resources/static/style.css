@@ -114,7 +114,8 @@ button:hover, .button:hover {
 .btn-outline {
   background-color: transparent !important;
   border: 2px solid var(--gn-primary) !important;
-  color: var(--gn-primary) !important;
+  /* WCAG AA 2 fix 06/05/2026 */
+  color: white /*var(--gn-primary) !important;*/
 }
 .btn-outline:hover {
   background-color: var(--gn-primary) !important;
@@ -138,6 +139,14 @@ input:focus, select:focus {
   border-radius: 8px;
   margin-bottom: 1rem;
   border: 1px solid #b91c1c;
+}
+
+/* Shared by both log-in and sign-up to display text at the bottom of their forms */
+.switch-auth {
+  margin-top:2rem;
+  /*font-size:0.9rem !important;*/
+  text-align:center;
+  font-size: 130% !important; /* This fixes the WCAG contrast violation */
 }
 
 /* Footer */

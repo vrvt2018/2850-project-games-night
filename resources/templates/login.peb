@@ -26,8 +26,8 @@
       </div>
     {% endif %}
 
-    <p style="margin-top:2rem;font-size:0.9rem;text-align:center; font-size: 130%"> {# Font size 130% for WCAG 2 AA Contrast #}
-      New here? <a href="/signup" style="color:var(--gn-primary);">Create an account</a> and start playing. {# Also changed here #}
+    <p class="switch-auth"> {# Font size 130% for WCAG 2 AA Contrast #}
+      New here? <a href="/signup" style="color:var(--gn-primary);">Create an account</a> and start playing.
     </p>
   </div>
 </section>
