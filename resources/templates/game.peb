@@ -43,6 +43,7 @@
     <div style="background:#374151;padding:1rem;border-radius:8px;display:inline-block;min-width:200px;margin:1rem 0;">
       <strong>Players joined:</strong>
       <span id="playerCount">1</span> / {{ maxPlayers }}
+    </div>
     <br>
     <button id="btnStart" class="button" style="display:none;margin:0 auto;width:250px;" disabled onclick="startGame()">Start Game</button>
     <p id="waitingMessage" style="color:#9ca3af;display:none;">Waiting for host to start...</p>
