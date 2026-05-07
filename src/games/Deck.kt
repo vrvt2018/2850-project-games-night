@@ -1,4 +1,6 @@
 // AI-assisted: Card data model and CDN image URL generation (Gemini)
+// I literally made this class/the data model myself???? - Andy
+
 // Data classes for Card, Suit, and Deck used by Go Fish
 package com.example.games
 
