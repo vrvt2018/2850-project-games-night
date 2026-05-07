@@ -138,11 +138,11 @@ function updateGameState(state) {
   if (isMyTurn) {
     actionArea.style.display = "block";
     document.getElementById("btnAsk").disabled = false;
-    document.getElementById("btnEndTurn").style.display = "none";
 
     // Clear old result unless we just had an ask result
     if (state.type !== "ASK_RESULT") {
       document.getElementById("actionResult").style.display = "none";
+      document.getElementById("btnEndTurn").style.display = "none";
     }
 
     // Populate rank dropdown based on current hand
