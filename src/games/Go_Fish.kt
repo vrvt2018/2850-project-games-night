@@ -8,6 +8,17 @@ package com.example.games
 * The game ends when all 13 books have been formed or the deck is empty and no
 * player can make a move.
 */
+
+call.respond(
+    PebbleContent(
+        "gofish.peb",
+        mapOf(
+            "title" to "Go Fish",
+            "maxPlayers" to 4
+        )
+    )
+)
+
 class GoFish : Game("Go Fish", 4, 2) {
     private val deck = Deck()
     private val drawPile = mutableListOf<Card>()
