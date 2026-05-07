@@ -5,7 +5,10 @@ import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.send
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 
 object GoFishHandler : GameSocketHandler() {
     private object Protocol {
@@ -30,21 +33,18 @@ object GoFishHandler : GameSocketHandler() {
         player: NetworkPlayer?,
         room: Room?,
     ) {
-        val r =
-            room ?: run {
-                session.send(buildErrorMsg(Protocol.REASON_GAME_NOT_STARTED))
-                return
-            }
-        val g =
-            r.game as? GoFish ?: run {
-                session.send(buildErrorMsg("Game type mismatch (not Go Fish)"))
-                return
-            }
-        val p =
-            player ?: run {
-                session.send(buildErrorMsg("Player not found"))
-                return
-            }
+        val r = room ?: run {
+            session.send(buildErrorMsg(Protocol.REASON_GAME_NOT_STARTED))
+            return
+        }
+        val g = r.game as? GoFish ?: run {
+            session.send(buildErrorMsg("Game type mismatch (not Go Fish)"))
+            return
+        }
+        val p = player ?: run {
+            session.send(buildErrorMsg("Player not found"))
+            return
+        }
 
         if (!r.started) {
             session.send(buildErrorMsg(Protocol.REASON_GAME_NOT_STARTED))
@@ -66,33 +66,28 @@ object GoFishHandler : GameSocketHandler() {
         game: GoFish,
         player: NetworkPlayer,
         room: Room,
-        session: DefaultWebSocketServerSession,
+        session: DefaultWebSocketServerSession
     ) {
         if (game.currentPlayer() != player.playerIndex) {
             session.send(buildErrorMsg(Protocol.REASON_NOT_YOUR_TURN))
             return
         }
 
-        val target =
-            msg["target"]
-                ?.jsonPrimitive
-                ?.content
-                ?.toIntOrNull()
-                .takeIf { it in 0 until room.players.size } ?: run {
-                session.send(buildErrorMsg(Protocol.REASON_INVALID_TARGET))
-                return
-            }
-        val rank =
-            msg["rank"]?.jsonPrimitive?.content?.takeIf { it.isNotBlank() } ?: run {
-                session.send(buildErrorMsg(Protocol.REASON_INVALID_RANK))
-                return
-            }
+        val target = msg["target"]?.jsonPrimitive?.content?.toIntOrNull().takeIf { it in 0 until room.players.size } ?: run {
+            session.send(buildErrorMsg(Protocol.REASON_INVALID_TARGET))
+            return
+        }
+        val rank = msg["rank"]?.jsonPrimitive?.content?.takeIf { it.isNotBlank() } ?: run {
+            session.send(buildErrorMsg(Protocol.REASON_INVALID_RANK))
+            return
+        }
 
         val askSuccess = game.askForCard(target, rank)
 
         if (game.isGameOver()) {
-            RoomHandler.markRoomFinished(room)
-            broadcast(room, buildGameEndMsg(game.getWinner()))
+            val winner = game.getWinner()
+            RoomHandler.markRoomFinished(room, winner)
+            broadcast(room, buildGameEndMsg(winner))
         } else {
             room.players.forEachIndexed { index, pl ->
                 pl.session.send(buildStateMsg(Protocol.TYPE_ASK_RESULT, game, index, askSuccess))
@@ -105,7 +100,7 @@ object GoFishHandler : GameSocketHandler() {
         game: GoFish,
         player: NetworkPlayer,
         room: Room,
-        session: DefaultWebSocketServerSession,
+        session: DefaultWebSocketServerSession
     ) {
         if (game.currentPlayer() != player.playerIndex) {
             session.send(buildErrorMsg(Protocol.REASON_NOT_YOUR_TURN))
@@ -115,8 +110,9 @@ object GoFishHandler : GameSocketHandler() {
         game.endTurn()
 
         if (game.isGameOver()) {
-            RoomHandler.markRoomFinished(room)
-            broadcast(room, buildGameEndMsg(game.getWinner()))
+            val winner = game.getWinner()
+            RoomHandler.markRoomFinished(room, winner)
+            broadcast(room, buildGameEndMsg(winner))
         } else {
             room.players.forEachIndexed { index, pl ->
                 pl.session.send(buildStateMsg(Protocol.TYPE_STATE, game, index))
@@ -125,36 +121,34 @@ object GoFishHandler : GameSocketHandler() {
         }
     }
 
-    private fun buildErrorMsg(reason: String): String =
-        Json.encodeToString(
+    private fun buildErrorMsg(reason: String): String {
+        return Json.encodeToString(
             mapOf(
                 "type" to Protocol.TYPE_ERROR,
-                "reason" to reason,
-            ),
+                "reason" to reason
+            )
         )
+    }
 
-    private fun buildGameEndMsg(winner: Int): String =
-        Json.encodeToString(
+    private fun buildGameEndMsg(winner: Int): String {
+        return Json.encodeToString(
             mapOf(
                 "type" to Protocol.TYPE_GAME_END,
-                "winner" to winner,
-            ),
+                "winner" to winner
+            )
         )
+    }
 
-    // This function builds a state and adds whether the ask was successful
-    private fun buildStateMsg(
+    internal fun buildStateMsg(
         type: String,
         game: GoFish,
         playerIndex: Int,
-        askSuccess: Boolean? = null,
+        askSuccess: Boolean? = null
     ): String {
-        var stateStr = game.buildState(type, game, playerIndex)
-        askSuccess?.let {
-            // Not the cleanest way to do this, but the final } needs to be removed before appending success field
-            stateStr = stateStr.removeSuffix("}").plus(""","success":$it}""")
-        }
-
-
-        return stateStr
+        val baseState = Json.parseToJsonElement(game.buildState(type, game, playerIndex)).jsonObject
+        return buildJsonObject {
+            baseState.forEach { (key, value) -> put(key, value) }
+            askSuccess?.let { put("success", it) }
+        }.toString()
     }
 }

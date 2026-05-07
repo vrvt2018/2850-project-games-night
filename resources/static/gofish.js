@@ -76,8 +76,12 @@ ws.onmessage = (e) => {
     case "GAME_END":
       elGameArea.style.display = "none";
       elGameOver.style.display = "block";
-      const winnerText = msg.winner === myPlayerIndex ? "You Win!" :
-                         (msg.winner === -1 ? "It's a tie!" : `Player ${msg.winner + 1} Wins!`);
+      const gameOverTitle = document.querySelector("#gameOverArea h1");
+      if (gameOverTitle) {
+        gameOverTitle.innerText = msg.reason === "player_left" ? "Game Ended" : "Game Over";
+      }
+      const winnerText = msg.message || (msg.winner === myPlayerIndex ? "You Win!" :
+                         (msg.winner === -1 ? "It's a tie!" : `Player ${msg.winner + 1} Wins!`));
       document.getElementById("winnerText").innerText = winnerText;
       break;
   }
@@ -138,7 +142,7 @@ function updateGameState(state) {
   if (isMyTurn) {
     actionArea.style.display = "block";
     document.getElementById("btnAsk").disabled = false;
-    document.getElementById("btnEndTurn").style.display = "block"; // Was set to "none" for some reason?
+    document.getElementById("btnEndTurn").style.display = "none";
 
     // Clear old result unless we just had an ask result
     if (state.type !== "ASK_RESULT") {
@@ -169,8 +173,7 @@ function updateGameState(state) {
   const handDiv = document.getElementById("myHand");
   handDiv.innerHTML = "";
   state.myHand.forEach(url => {
-    // background: white; tag fixes the issue of cards where they are transparent
-    handDiv.innerHTML += `<img src="${url}" class="card-image" alt="card" style="width:80px;background: white;">`;
+    handDiv.innerHTML += `<img src="${url}" class="card-image" alt="card" style="width:80px;">`;
   });
   document.getElementById("yourBooksText").innerText = `Books completed: ${state.books[myPlayerIndex]}`;
 

@@ -27,6 +27,8 @@ data class Room(
     var game: Game? = null, // Generic type - originally was specific per game class
     var started: Boolean = false,
     var finished: Boolean = false,
+    val participantUsernames: MutableMap<Int, String> = mutableMapOf(),
+    var historyRecorded: Boolean = false,
     val chatMessages: MutableList<RoomChatMessage> = mutableListOf(),
     var updatedAt: Long = System.currentTimeMillis(),
 )

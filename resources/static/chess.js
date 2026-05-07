@@ -108,8 +108,12 @@ ws.onmessage = (e) => {
     case "GAME_END":
       elGameArea.style.display = "none";
       elGameOver.style.display = "block";
-      const winnerText = msg.winner === myPlayerIndex ? "You Win!" : 
-                         (msg.winner === -1 ? "Draw!" : "Opponent Wins!");
+      const gameOverTitle = document.querySelector("#gameOverArea h1");
+      if (gameOverTitle) {
+        gameOverTitle.innerText = msg.reason === "player_left" ? "Game Ended" : "Checkmate";
+      }
+      const winnerText = msg.message || (msg.winner === myPlayerIndex ? "You Win!" : 
+                         (msg.winner === -1 ? "Draw!" : "Opponent Wins!"));
       document.getElementById("winnerText").innerText = winnerText;
       break;
   }
