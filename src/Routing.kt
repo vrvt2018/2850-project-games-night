@@ -71,9 +71,13 @@ fun Application.configureRouting() {
         }
 
         get("/leaderboard") {
+            call.respondRedirect("/history", permanent = false)
+        }
+
+        get("/history") {
             val user = call.request.cookies["AUTH_TOKEN"]?.let { getUsernameByToken(it) } ?: return@get call.respondRedirect("/")
-            val stats = getLeaderboard()
-            call.respondTemplate("leaderboard.peb", mapOf("title" to "Leaderboard", "user" to user, "stats" to stats))
+            val history = getMatchHistory()
+            call.respondTemplate("history.peb", mapOf("title" to "Match History", "user" to user, "history" to history))
         }
 
         // Pages for each game
