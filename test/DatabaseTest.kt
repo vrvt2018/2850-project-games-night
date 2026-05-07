@@ -56,6 +56,19 @@ class DatabaseTest {
     }
 
     @Test
+    fun testMatchHistoryRetrieval() {
+        recordGameResult("Chess", "alice", listOf("alice", "bob"))
+
+        val history = getMatchHistory()
+
+        assertEquals(1, history.size)
+        assertEquals("Chess", history.first().gameName)
+        assertEquals("alice", history.first().winner)
+        assertEquals("alice", history.first().winnerLabel)
+        assertEquals("alice, bob", history.first().playersLabel)
+    }
+
+    @Test
     fun testValidationFunctions() {
         assertTrue(isValidUsername("player1"))
         assertFalse(isValidUsername("pl"), "Too short")
