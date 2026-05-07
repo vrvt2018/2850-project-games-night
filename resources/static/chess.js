@@ -18,8 +18,6 @@ const elGameArea = document.getElementById("gameArea");
 const elGameOver = document.getElementById("gameOverArea");
 const boardEl = document.getElementById("boardEl");
 
-// Pieces mapped to reliable Lichess SVG URLs
-//
 const pieceImages = {
   'K': 'https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wK.svg', 
   'Q': 'https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wQ.svg', 
