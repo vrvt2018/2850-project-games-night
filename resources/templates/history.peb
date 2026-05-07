@@ -1,0 +1,46 @@
+{% extends "base.peb" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<section>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:2rem;">
+    <div>
+      <h1 style="margin-bottom:0.35rem;">Match History</h1>
+      <p style="margin:0;color:#9ca3af;">Recent completed matches across all game rooms.</p>
+    </div>
+    <a href="/games" class="button btn-outline">Back to Games</a>
+  </div>
+
+  <div class="card" style="padding:1rem;">
+    <table role="grid">
+      <thead>
+        <tr>
+          <th scope="col">Game</th>
+          <th scope="col">Winner</th>
+          <th scope="col">Players</th>
+          <th scope="col">Played At</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if history is empty %}
+          <tr><td colspan="4" style="text-align:center;padding:2rem;color:#9ca3af;">No match history yet.</td></tr>
+        {% else %}
+          {% for match in history %}
+            <tr>
+              <td><strong>{{ match.gameName }}</strong></td>
+              <td>
+                {% if match.winner and match.winner == user %}
+                  <strong style="color:var(--gn-primary)">{{ match.winner }} (You)</strong>
+                {% else %}
+                  {{ match.winnerLabel }}
+                {% endif %}
+              </td>
+              <td>{{ match.playersLabel }}</td>
+              <td>{{ match.playedAtLabel }}</td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
