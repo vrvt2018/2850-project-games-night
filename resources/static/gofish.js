@@ -138,7 +138,7 @@ function updateGameState(state) {
   if (isMyTurn) {
     actionArea.style.display = "block";
     document.getElementById("btnAsk").disabled = false;
-    document.getElementById("btnEndTurn").style.display = "none";
+    document.getElementById("btnEndTurn").style.display = "block"; // Was set to "none" for some reason?
 
     // Clear old result unless we just had an ask result
     if (state.type !== "ASK_RESULT") {
@@ -169,7 +169,8 @@ function updateGameState(state) {
   const handDiv = document.getElementById("myHand");
   handDiv.innerHTML = "";
   state.myHand.forEach(url => {
-    handDiv.innerHTML += `<img src="${url}" class="card-image" alt="card" style="width:80px;">`;
+    // background: white; tag fixes the issue of cards where they are transparent
+    handDiv.innerHTML += `<img src="${url}" class="card-image" alt="card" style="width:80px;background: white;">`;
   });
   document.getElementById("yourBooksText").innerText = `Books completed: ${state.books[myPlayerIndex]}`;
 

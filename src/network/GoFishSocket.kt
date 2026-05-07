@@ -141,29 +141,20 @@ object GoFishHandler : GameSocketHandler() {
             ),
         )
 
+    // This function builds a state and adds whether the ask was successful
     private fun buildStateMsg(
         type: String,
         game: GoFish,
         playerIndex: Int,
         askSuccess: Boolean? = null,
     ): String {
-        val state = game.getState(playerIndex)
-        val stateMap =
-            mutableMapOf<String, Any>(
-                "type" to type,
-                "turn" to state["turn"]!!,
-                "deckSize" to state["deckSize"]!!,
-                "numPlayers" to state["numPlayers"]!!,
-                "playerIndex" to playerIndex,
-                "gameOver" to state["gameOver"]!!,
-                "winner" to (state["winner"] ?: "null"),
-                "books" to state["books"]!!,
-                "handSizes" to state["handSizes"]!!,
-                "myHand" to state["myHand"]!!,
-                "myHandRanks" to state["myHandRanks"]!!,
-            )
-        askSuccess?.let { stateMap["success"] = it }
+        var stateStr = game.buildState(type, game, playerIndex)
+        askSuccess?.let {
+            // Not the cleanest way to do this, but the final } needs to be removed before appending success field
+            stateStr = stateStr.removeSuffix("}").plus(""","success":$it}""")
+        }
 
-        return Json.encodeToString(stateMap)
+
+        return stateStr
     }
 }

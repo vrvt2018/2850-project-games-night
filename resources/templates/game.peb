@@ -66,35 +66,7 @@
   </div>
 
 {# Active Game Area #}
-        {% block game  %}
-  <div id="gameArea" style="display:none;">
-
-    <div id="turnAlert" class="card" style="margin-bottom:2rem;background-color:rgba(139, 92, 246, 0.1);border-color:var(--gn-primary);text-align:center;">
-      <h3 style="margin:0;color:var(--gn-primary);" id="turnText">Game Started</h3>
-      <p style="margin:0.25rem 0 0;color:#d1d5db;font-size:0.9rem;" id="playerColorText">You are playing as White</p>
-    </div>
-
-    <!-- Chess Board Container -->
-    <div class="chess-board" id="boardEl">
-      <!-- 64 squares populated by JS -->
-    </div>
-
-    <div style="text-align:center;margin-top:2rem;">
-      <button class="button btn-outline" style="color:#fca5a5;border-color:#fca5a5;" onclick="resign()">Resign Game</button>
-    </div>
-  </div>
-
-  <!-- Game Over Screen -->
-  <div id="gameOverArea" class="card" style="display:none;text-align:center;padding:4rem 2rem;">
-    <h1 style="color:var(--gn-primary);font-size:3rem;margin-bottom:1rem;">Checkmate</h1>
-    <h2 id="winnerText" style="color:white;margin-bottom:2rem;"></h2>
-    <p>Stats have been recorded to the leaderboard.</p>
-    <a href="/games" class="button" style="display:inline-block;margin-top:2rem;">Return to Games</a>
-  </div>
-
-</section>
-
-<!-- Include script that connects WebSocket and handles UI updates -->
-<script src="/resources/chess.js"></script>
+{% block game  %}
+<p> Game file error! </p> {# This should never be reached. #}
 {% endblock %}
-    {% endblock %}
+{% endblock %}
