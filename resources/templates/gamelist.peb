@@ -1,5 +1,5 @@
     {% extends "base.peb" %}
-        {% block title %}{{ title }}{% endblock %}
+        {% block title %}Game{% endblock %}
     {% block content %}
 <section>
   <div style="text-align:center;margin-bottom:3rem;">
