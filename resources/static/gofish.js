@@ -138,7 +138,7 @@ function updateGameState(state) {
   if (isMyTurn) {
     actionArea.style.display = "block";
     document.getElementById("btnAsk").disabled = false;
-    document.getElementById("btnEndTurn").style.display = "block"; // Was set to "none" for some reason?
+    document.getElementById("btnEndTurn").style.display = "none";
 
     // Clear old result unless we just had an ask result
     if (state.type !== "ASK_RESULT") {
