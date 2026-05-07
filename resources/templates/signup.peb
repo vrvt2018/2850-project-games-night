@@ -6,6 +6,19 @@
     <h1 style="margin-top:0;font-size:1.8rem;">Sign up for Games Night</h1>
     <p style="color:#9ca3af;margin-bottom:1.5rem;">Register to securely store your profile and keep your match history.</p>
 
+    {# Moved to top after P2 UX testing highlighted ease of use issues #}
+    {% if error is defined and error %}
+      <div class="error-msg" style="margin-top:1rem;" role="alert">
+        {% if error == 'all_fields_required' %}All fields are required.
+        {% elseif error == 'password_mismatch' %}Passwords do not match.
+        {% elseif error == 'invalid_username' %}Invalid username format (3-32 chars, no spaces).
+        {% elseif error == 'invalid_email' %}Please enter a valid email address.
+        {% elseif error == 'weak_password' %}Password must be 8+ chars with letters and numbers.
+        {% elseif error == 'user_exists' %}Username or email already exists.
+        {% else %}An error occurred. Please try again.
+        {% endif %}
+      </div>
+    {% endif %}
     <form action="/signup" method="post" style="display:grid;gap:0.75rem;">
       <label for="username">Username (3-32 chars, no spaces)</label>
       <input type="text" id="username" name="username" required placeholder="your-username" pattern="^[A-Za-z0-9_-]{3,32}$">
@@ -22,18 +35,7 @@
       <button type="submit" style="margin-top:1rem;width:100%;">Create account</button>
     </form>
 
-    {% if error is defined and error %}
-      <div class="error-msg" style="margin-top:1rem;" role="alert">
-        {% if error == 'all_fields_required' %}All fields are required.
-        {% elseif error == 'password_mismatch' %}Passwords do not match.
-        {% elseif error == 'invalid_username' %}Invalid username format (3-32 chars, no spaces).
-        {% elseif error == 'invalid_email' %}Please enter a valid email address.
-        {% elseif error == 'weak_password' %}Password must be 8+ chars with letters and numbers.
-        {% elseif error == 'user_exists' %}Username or email already exists.
-        {% else %}An error occurred. Please try again.
-        {% endif %}
-      </div>
-    {% endif %}
+
 
     <p class="switch-auth"> {# New style made to avoid repeating WCAG fix #}
       Already have an account? <a href="/" style="color:var(--gn-primary)">Login</a>.

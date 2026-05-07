@@ -196,7 +196,7 @@ fun Application.configureRouting() {
 
         get("/logout") {
             call.request.cookies["AUTH_TOKEN"]?.let { deleteSession(it) }
-            call.response.cookies.append(io.ktor.http.Cookie("AUTH_TOKEN", "", maxAge = 0, path = "/"))
+            call.response.cookies.append(Cookie("AUTH_TOKEN", "", maxAge = 0, path = "/"))
             call.respondRedirect("/")
         }
 

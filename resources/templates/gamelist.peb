@@ -21,9 +21,12 @@
         {% for game in games %}
           <article class="card game-card" style="display:flex;flex-direction:column;justify-content:space-between;">
             <div>
-              <h2 style="margin-bottom:0.5rem;color:white;">{{ game.name }}</h2>
+              <h2 style="margin-bottom:0.5rem;color:white;"><img src="resources/logos/logo_{{ game.name }}.svg" style="width:80px;">&nbsp; &nbsp; &nbsp; &nbsp; {{ game.name }} </h2>
               <p style="color:#9ca3af;margin-bottom:1.5rem;">Players: 1–{{ game.maxPlayers }}</p>
-              <p>Game description goes here</p>
+            {# This is very lazy, but it means not having to edit the database #}
+              {% if game.name == "Chess" %} <p> Centuries-old strategy game </p>{% endif %}
+              {% if game.name == "Go Fish" %} <p> Common friend-group card game </p>{% endif %}
+
             </div>
 
             <div style="margin-top:2rem;display:flex;gap:1rem;">
@@ -98,14 +101,14 @@
                       {% if match.winner and match.winner == user %}
                         <strong style="color:var(--gn-primary)">{{ match.winner }} (You)</strong>
                       {% else %}
-                {{ match.winnerLabel }}
-                {% endif %}
+        {{ match.winnerLabel }}
+        {% endif %}
                     </td>
                     <td>{{ match.playersLabel }}</td>
                     <td>{{ match.playedAtLabel }}</td>
                   </tr>
                 {% endfor %}
-            {% endif %}
+    {% endif %}
             </tbody>
           </table>
         </div>
@@ -118,4 +121,4 @@
 
 {% endblock %}
 
-{# Note: AI used to add missing closures - there were a few missing and it was hard to find where they were. #}
+    {# Note: AI used to add missing closures - there were a few missing and it was hard to find where they were. #}
