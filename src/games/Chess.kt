@@ -99,21 +99,22 @@ class Chess(
         // Handle Castling Execution (King moved 2 squares)
         if (piece.lowercaseChar() == 'k' && kotlin.math.abs(from - to) == 2) {
             if (to == 62) {
+                // White Kingside
                 board[61] = 'R'
                 board[63] = '.'
-            } // White Kingside
-            else if (to == 58) {
+            } else if (to == 58) {
+                // White Queenside
                 board[59] = 'R'
                 board[56] = '.'
-            } // White Queenside
-            else if (to == 6) {
+            } else if (to == 6) {
+                // Black Kingside
                 board[5] = 'r'
                 board[7] = '.'
-            } // Black Kingside
-            else if (to == 2) {
+            } else if (to == 2) {
+                // Black Queenside
                 board[3] = 'r'
                 board[0] = '.'
-            } // Black Queenside
+            }
         }
 
         // Handle En Passant Execution
@@ -135,10 +136,10 @@ class Chess(
         // Update castling rights
         if (piece == 'K') whiteKingMoved = true
         if (piece == 'k') blackKingMoved = true
-        if (from == 56 || target == 'R' && to == 56) whiteRookAMoved = true
-        if (from == 63 || target == 'R' && to == 63) whiteRookHMoved = true
-        if (from == 0 || target == 'r' && to == 0) blackRookAMoved = true
-        if (from == 7 || target == 'r' && to == 7) blackRookHMoved = true
+        if (from == 56 || (target == 'R' && to == 56)) whiteRookAMoved = true
+        if (from == 63 || (target == 'R' && to == 63)) whiteRookHMoved = true
+        if (from == 0 || (target == 'r' && to == 0)) blackRookAMoved = true
+        if (from == 7 || (target == 'r' && to == 7)) blackRookHMoved = true
 
         // Advance turn
         turn = 1 - turn
@@ -375,21 +376,21 @@ class Chess(
 
             if (isWhite && from == 60) {
                 if (to == 62 && !whiteKingMoved && !whiteRookHMoved && checkBoard[61] == '.' && checkBoard[62] == '.') {
-                    if (!isAttacked(61, !isWhite, checkBoard)) return true
+                    if (!isAttacked(61, false, checkBoard)) return true
                 }
                 if (to == 58 && !whiteKingMoved && !whiteRookAMoved && checkBoard[59] == '.' && checkBoard[58] == '.' &&
                     checkBoard[57] == '.'
                 ) {
-                    if (!isAttacked(59, !isWhite, checkBoard)) return true
+                    if (!isAttacked(59, false, checkBoard)) return true
                 }
             } else if (!isWhite && from == 4) {
                 if (to == 6 && !blackKingMoved && !blackRookHMoved && checkBoard[5] == '.' && checkBoard[6] == '.') {
-                    if (!isAttacked(5, !isWhite, checkBoard)) return true
+                    if (!isAttacked(5, true, checkBoard)) return true
                 }
                 if (to == 2 && !blackKingMoved && !blackRookAMoved && checkBoard[3] == '.' && checkBoard[2] == '.' &&
                     checkBoard[1] == '.'
                 ) {
-                    if (!isAttacked(3, !isWhite, checkBoard)) return true
+                    if (!isAttacked(3, true, checkBoard)) return true
                 }
             }
         }

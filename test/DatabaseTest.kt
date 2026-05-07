@@ -1,12 +1,11 @@
 package com.example
 
-import kotlin.test.*
-import java.io.File
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.deleteAll
+import org.jetbrains.exposed.sql.transactions.transaction
+import java.io.File
+import kotlin.test.*
 
 class DatabaseTest {
-
     @BeforeTest
     fun setup() {
         // Use an in-memory test database
@@ -35,7 +34,7 @@ class DatabaseTest {
     fun testSessionManagement() {
         createUser("sessionuser", "sess@example.com", hashPassword("pass"))
         val token = createSession("sessionuser")
-        
+
         val username = getUsernameByToken(token)
         assertEquals("sessionuser", username, "Token should resolve to the correct username")
 
@@ -46,6 +45,7 @@ class DatabaseTest {
 
     @Test
     fun testPasswordHashing() {
+        // Test with different passwords
         val hash1 = hashPassword("MySecurePass1!")
         val hash2 = hashPassword("MySecurePass1!")
         val hash3 = hashPassword("DifferentPass")

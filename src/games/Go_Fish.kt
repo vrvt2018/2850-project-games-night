@@ -81,7 +81,7 @@ class GoFish : Game("Go Fish", 4, 2) {
         rank: String,
     ): Boolean {
         if (isGameOver()) return false
-        if (targetPlayer !in 0 until numPlayers || targetPlayer == turn) return false
+        if (targetPlayer !in 0..numPlayers || targetPlayer == turn) return false
 
         val currentHand = hands[turn]
         if (currentHand.none { it.rankString() == rank }) return false

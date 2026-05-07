@@ -1,9 +1,10 @@
 package com.example.games
 
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class DeckTest {
-
     @Test
     fun testDeckContains52Cards() {
         val deck = Deck()
@@ -13,7 +14,7 @@ class DeckTest {
     @Test
     fun testCardRankStrings() {
         val deck = Deck()
-        assertEquals("A", deck.cards[0].rankString())    // Ace
+        assertEquals("A", deck.cards[0].rankString()) // Ace
         assertEquals("2", deck.cards[1].rankString())
         assertEquals("10", deck.cards[9].rankString())
         assertEquals("Jack", deck.cards[10].rankString())

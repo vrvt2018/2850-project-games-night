@@ -1,21 +1,21 @@
 package com.example.network
 
-import com.example.recordGameResult
-import com.example.getUsernameByToken
 import com.example.games.Chess
-import com.example.games.GoFish
 import com.example.games.Game
+import com.example.games.GoFish
+import com.example.getUsernameByToken
+import com.example.recordGameResult
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import io.ktor.websocket.send
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.put
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -30,8 +30,14 @@ object RoomHandler {
 
     fun createGameByName(name: String?): Game? =
         when (name?.lowercase()) {
-            "chess" -> Chess()
-            "go fish", "gofish" -> GoFish()
+            "chess" -> {
+                Chess()
+            }
+
+            "go fish", "gofish" -> {
+                GoFish()
+            }
+
             else -> {
                 println(name?.lowercase())
                 throw Exception("Game does not exist!")
@@ -40,37 +46,38 @@ object RoomHandler {
 
     fun getGameStringFromType(type: String): String = type.split('_')[1]
 
-    fun getRoomStatusSnapshots(): List<RoomStatusSnapshot> {
-        return rooms.values.map { room ->
-            synchronized(room) {
-                val status = when {
-                    room.finished -> "Finished" to "status-finished"
-                    room.started -> "In Progress" to "status-live"
-                    else -> "Waiting" to "status-waiting"
+    fun getRoomStatusSnapshots(): List<RoomStatusSnapshot> =
+        rooms.values
+            .map { room ->
+                synchronized(room) {
+                    val status =
+                        when {
+                            room.finished -> "Finished" to "status-finished"
+                            room.started -> "In Progress" to "status-live"
+                            else -> "Waiting" to "status-waiting"
+                        }
+                    val game = room.game
+                    val playerNames = room.players.map { it.username }
+                    RoomStatusSnapshot(
+                        roomId = room.id,
+                        gameName = game?.name ?: "Unknown Game",
+                        statusLabel = status.first,
+                        statusTone = status.second,
+                        hostUsername = playerNames.firstOrNull() ?: "Unknown host",
+                        playerCount = room.players.size,
+                        maxPlayers = game?.maxPlayers ?: room.players.size,
+                        playerSummary = "${room.players.size} / ${game?.maxPlayers ?: room.players.size} players",
+                        playerNamesDisplay = playerNames.ifEmpty { listOf("Waiting for players") }.joinToString(", "),
+                        updatedAtLabel = formatUpdatedAt(room.updatedAt),
+                    )
                 }
-                val game = room.game
-                val playerNames = room.players.map { it.username }
-                RoomStatusSnapshot(
-                    roomId = room.id,
-                    gameName = game?.name ?: "Unknown Game",
-                    statusLabel = status.first,
-                    statusTone = status.second,
-                    hostUsername = playerNames.firstOrNull() ?: "Unknown host",
-                    playerCount = room.players.size,
-                    maxPlayers = game?.maxPlayers ?: room.players.size,
-                    playerSummary = "${room.players.size} / ${game?.maxPlayers ?: room.players.size} players",
-                    playerNamesDisplay = playerNames.ifEmpty { listOf("Waiting for players") }.joinToString(", "),
-                    updatedAtLabel = formatUpdatedAt(room.updatedAt),
-                )
-            }
-        }.sortedWith(
-            compareBy<RoomStatusSnapshot>(
-                { statusSortRank(it.statusLabel) },
-                { it.gameName },
-                { it.roomId },
+            }.sortedWith(
+                compareBy<RoomStatusSnapshot>(
+                    { statusSortRank(it.statusLabel) },
+                    { it.gameName },
+                    { it.roomId },
+                ),
             )
-        )
-    }
 
     suspend fun handle(session: DefaultWebSocketServerSession) {
         var player: NetworkPlayer? = null
@@ -141,12 +148,13 @@ object RoomHandler {
 
         while (true) {
             val roomId = generateRoomId()
-            val r = Room(
-                id = roomId,
-                players = mutableListOf(p),
-                game = game,
-                participantUsernames = mutableMapOf(0 to username),
-            )
+            val r =
+                Room(
+                    id = roomId,
+                    players = mutableListOf(p),
+                    game = game,
+                    participantUsernames = mutableMapOf(0 to username),
+                )
 
             if (rooms.putIfAbsent(roomId, r) == null) {
                 session.send("""{"type":"ROOM_CREATED","roomId":"$roomId","playerIndex":0}""")
@@ -174,12 +182,19 @@ object RoomHandler {
             r == null -> {
                 session.send("""{"type":"JOIN_FAIL","reason":"Room not found"}""")
             }
+
             else -> {
                 val joinResult =
                     synchronized(r) {
                         when {
-                            r.started -> JoinAttempt.Failure("Game already in progress")
-                            r.players.size >= r.game!!.maxPlayers -> JoinAttempt.Failure("Room is full")
+                            r.started -> {
+                                JoinAttempt.Failure("Game already in progress")
+                            }
+
+                            r.players.size >= r.game!!.maxPlayers -> {
+                                JoinAttempt.Failure("Room is full")
+                            }
+
                             else -> {
                                 val playerIndex = r.players.size
                                 val p = NetworkPlayer(UUID.randomUUID().toString(), session, playerIndex, username)
@@ -195,6 +210,7 @@ object RoomHandler {
                     is JoinAttempt.Failure -> {
                         session.send("""{"type":"JOIN_FAIL","reason":"${joinResult.reason}"}""")
                     }
+
                     is JoinAttempt.Success -> {
                         val p = joinResult.player
                         val playerIndex = p.playerIndex
@@ -252,7 +268,9 @@ object RoomHandler {
         val r = room ?: return
         val p = player ?: return
         val text =
-            msg["text"]?.jsonPrimitive?.content
+            msg["text"]
+                ?.jsonPrimitive
+                ?.content
                 ?.trim()
                 ?.take(280)
                 ?.takeIf { it.isNotBlank() }
@@ -286,7 +304,10 @@ object RoomHandler {
         }
     }
 
-    suspend fun markRoomFinished(room: Room?, winner: Int = -1) {
+    suspend fun markRoomFinished(
+        room: Room?,
+        winner: Int = -1,
+    ) {
         val targetRoom = room ?: return
         synchronized(targetRoom) {
             targetRoom.finished = true
@@ -327,8 +348,8 @@ object RoomHandler {
         }.toString()
     }
 
-    private fun buildChatMessageMessage(message: RoomChatMessage): String {
-        return buildJsonObject {
+    private fun buildChatMessageMessage(message: RoomChatMessage): String =
+        buildJsonObject {
             put("type", "CHAT_MESSAGE")
             put(
                 "message",
@@ -337,7 +358,6 @@ object RoomHandler {
                 },
             )
         }.toString()
-    }
 
     private fun buildRoomStatusListMessage(): String {
         val roomStatuses = getRoomStatusSnapshots()
@@ -417,9 +437,8 @@ object RoomHandler {
         put("sentAtLabel", formatChatTimestamp(message.sentAt))
     }
 
-    private fun formatChatTimestamp(sentAt: Long): String {
-        return chatTimeFormatter.format(Instant.ofEpochMilli(sentAt).atZone(ZoneId.systemDefault()))
-    }
+    private fun formatChatTimestamp(sentAt: Long): String =
+        chatTimeFormatter.format(Instant.ofEpochMilli(sentAt).atZone(ZoneId.systemDefault()))
 
     private fun formatUpdatedAt(updatedAt: Long): String {
         val ageSeconds = ((System.currentTimeMillis() - updatedAt) / 1000).coerceAtLeast(0)
@@ -431,16 +450,18 @@ object RoomHandler {
         }
     }
 
-    private fun statusSortRank(statusLabel: String): Int {
-        return when (statusLabel) {
+    private fun statusSortRank(statusLabel: String): Int =
+        when (statusLabel) {
             "In Progress" -> 0
             "Waiting" -> 1
             "Finished" -> 2
             else -> 3
         }
-    }
 
-    private fun recordRoomHistory(room: Room, winnerIndex: Int) {
+    private fun recordRoomHistory(
+        room: Room,
+        winnerIndex: Int,
+    ) {
         val gameResult =
             synchronized(room) {
                 if (!room.started || room.historyRecorded) {

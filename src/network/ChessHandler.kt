@@ -5,7 +5,9 @@ package com.example.network
 import com.example.games.Chess
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.send
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 // This description is obviously AI-generated. :-(
 
@@ -23,7 +25,7 @@ import kotlinx.serialization.json.*
  * Protocol (JSON messages server → client):
  *   { "type": "ROOM_CREATED", "roomId": "XXXX", "playerIndex": 0 }
  *   { "type": "JOIN_OK", "playerIndex": 1 }
- *   { "type": "JOIN_FAIL", "reason": "..." }
+ *   { "type": "JOIN_FAIL", "reason": "..."}
  *   { "type": "PLAYER_UPDATE", "count": 2 }
  *   { "type": "START", ...getState() fields... }
  *   { "type": "LEGAL_MOVES", "from": 12, "moves": [28, 36, ...] }

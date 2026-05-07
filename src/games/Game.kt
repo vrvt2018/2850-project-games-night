@@ -1,17 +1,15 @@
 package com.example.games
 
 /**
- * Abstract base class representing a generic game.
- *
- * @param name The display name of the game.
- * @param maxPlayers The maximum number of players allowed in this game.
+ * All games should inherit from this class for modularity
+ * => contains required functions for game
  */
 abstract class Game(
     val name: String,
     val maxPlayers: Int = 2,
     val minPlayers: Int = 2,
 ) {
-    /** Current number of active players in this game instance. */
+    /** Current number of players. */
     var numPlayers: Int = 0
         protected set
 
@@ -19,7 +17,7 @@ abstract class Game(
     var started: Boolean = false
         protected set
 
-    /** Adds a player to the game. Returns false if the game is full. */
+    /** Adds a player to the game. Return false if the game is full. */
     abstract fun addPlayer(): Boolean
 
     /** Starts the game (deals cards, sets initial state, etc.). */
@@ -38,6 +36,11 @@ abstract class Game(
     abstract fun getState(playerIndex: Int = -1): Map<String, Any?>
 
     // Currently in here for use with networking when porting. Should probably be moved
+    // => actually doesn't need to be moved, it's fine here
+
+    /**
+     * Return a string representing current game state for sending across the network.
+     */
     abstract fun buildState(
         type: String,
         game: Game,

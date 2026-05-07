@@ -23,8 +23,7 @@ class Card(
     private val _rank: Int,
 ) {
     /**
-     * The rank of this card: an Int (1-10) for numbered cards, or a [PictureCard] for face cards.
-     * Ace is represented as 1.
+     * Rank of this card
      */
     val rank: Any
         get() = if (_rank in 1..10) _rank else PictureCard.entries[_rank - 11]

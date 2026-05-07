@@ -2,12 +2,18 @@ package com.example.network
 
 import com.example.games.Game
 
+/**
+ * Represents chat message
+ */
 data class RoomChatMessage(
     val author: String,
     val text: String,
     val sentAt: Long = System.currentTimeMillis(),
 )
 
+/**
+ * Represents a single state of the room so it can be shared
+ */
 data class RoomStatusSnapshot(
     val roomId: String,
     val gameName: String,
@@ -21,6 +27,9 @@ data class RoomStatusSnapshot(
     val updatedAtLabel: String,
 )
 
+/**
+ * Represents a room, encapsulates all required data for room.
+ */
 data class Room(
     val id: String,
     val players: MutableList<NetworkPlayer> = mutableListOf(),

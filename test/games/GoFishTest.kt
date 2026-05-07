@@ -6,7 +6,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class GoFishTest {
-
     private fun createGame(playerCount: Int): GoFish {
         val game = GoFish()
         repeat(playerCount) {

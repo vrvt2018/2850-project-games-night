@@ -26,7 +26,7 @@ class GoFishHandlerTest {
         val msg = Json.parseToJsonElement(payload).jsonObject
 
         assertEquals("ASK_RESULT", msg["type"]?.jsonPrimitive?.content)
-        assertTrue(msg["success"]?.jsonPrimitive?.boolean == true)
+        assertEquals(msg["success"]?.jsonPrimitive?.boolean, true)
         assertTrue(msg.containsKey("myHand"))
         assertTrue(msg.containsKey("myHandRanks"))
         assertTrue(msg.containsKey("handSizes"))
