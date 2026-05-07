@@ -182,11 +182,12 @@ function updateGameState(state) {
     const isTheirTurn = state.turn === i;
     const activeClass = isTheirTurn ? "active-turn" : "";
 
+    /* Colour set to white for all fields for WCAG 07/05/2026 */
     oppGrid.innerHTML += `
       <div class="player-box ${activeClass}">
-        <h4 style="margin:0 0 0.5rem;">Player ${i + 1}</h4>
-        <p style="margin:0;font-size:0.9rem;color:#9ca3af;">${size} cards in hand</p>
-        <p style="margin:0.25rem 0 0;font-size:0.9rem;color:var(--gn-accent);">Books: ${state.books[i]}</p>
+        <h4 style="margin:0 0 0.5rem;color:white;">Player ${i + 1}</h4>
+        <p style="margin:0;font-size:0.9rem;color:white">${size} cards in hand</p>
+        <p style="margin:0.25rem 0 0;font-size:0.9rem;color:white">Books: ${state.books[i]}</p>
       </div>
     `;
   });
