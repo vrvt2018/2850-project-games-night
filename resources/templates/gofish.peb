@@ -1,5 +1,5 @@
 {% extends "game.peb" %}
-{% block title %}{{ title }}{% endblock %}
+{% block title %}Go Fish{% endblock %}
 {% block game %}
   <div id="gameArea" style="display:none;">
     <div id="turnAlert" class="card" style="margin-bottom:1rem;background-color:rgba(139, 92, 246, 0.1);border-color:var(--gn-primary);text-align:center;">
