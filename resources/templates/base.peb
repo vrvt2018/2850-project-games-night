@@ -17,7 +17,7 @@
       <nav class="nav-menu">
         {% if user %}
           <a href="/games" class="nav-link">Games</a>
-          <a href="/history" class="nav-link">History</a>
+            {#  Removed history link from here as added to main page  #}
           <span class="nav-user">Logged in as <strong>{{ user }}</strong></span>
           <a href="/logout" class="nav-link" style="color: #fca5a5;">Logout</a>
         {% else %}

@@ -1,6 +1,7 @@
     {% extends "base.peb" %}
         {% block title %}{{ title }}{% endblock %}
     {% block content %}
+
 <section>
   <div style="text-align:center;margin-bottom:3rem;">
     <h1 style="font-size:2.5rem;margin-bottom:0.5rem;color:white;">Select a Game</h1>
@@ -15,52 +16,106 @@
       </div>
     </div>
 
-    <div id="roomStatusList" class="status-grid" {% if not hasLiveRooms %}style="display:none;"{% endif %}>
-      {% if hasLiveRooms %}
-        {% for room in liveRooms %}
-          <article class="card room-status-card">
-            <div class="room-status-top">
-              <span class="status-pill {{ room.statusTone }}">{{ room.statusLabel }}</span>
-              <strong style="color:white;">{{ room.gameName }}</strong>
+    {% if hasGames %}
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:2rem;">
+        {% for game in games %}
+          <article class="card game-card" style="display:flex;flex-direction:column;justify-content:space-between;">
+            <div>
+              <h2 style="margin-bottom:0.5rem;color:white;">{{ game.name }}</h2>
+              <p style="color:#9ca3af;margin-bottom:1.5rem;">Players: 1–{{ game.maxPlayers }}</p>
+              <p>Game description goes here</p>
             </div>
-            <div class="room-status-code">Room {{ room.roomId }}</div>
-            <p style="margin:0;color:#d1d5db;">{{ room.playerSummary }}</p>
-            <p style="margin:0;color:#9ca3af;">Host: {{ room.hostUsername }}</p>
-            <p style="margin:0;color:#9ca3af;">Players: {{ room.playerNamesDisplay }}</p>
-            <p style="margin:0;color:#6b7280;font-size:0.9rem;">{{ room.updatedAtLabel }}</p>
+
+            <div style="margin-top:2rem;display:flex;gap:1rem;">
+              <a href="{{ game.url }}" class="button" style="text-align:center;width:100%;">Enter Lobby</a>
+            </div>
           </article>
         {% endfor %}
-      {% endif %}
-    </div>
-
-    <div id="roomStatusEmpty" class="card room-status-empty" {% if hasLiveRooms %}style="display:none;"{% endif %}>
-      <h3 style="margin:0 0 0.5rem;color:white;">No live rooms yet</h3>
-      <p style="margin:0;color:#9ca3af;">Start a chess or Go Fish lobby and it will show up here.</p>
-    </div>
+      </div>
+    {% else %}
+      <div class="card" style="text-align:center;padding:4rem;">
+        <h2 style="color:#d1d5db;">Games are currently offline.</h2>
+        <p style="color:#9ca3af;">Please check back later.</p>
+      </div>
+    {% endif %}
   </section>
 
-  {% if hasGames %}
-    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:2rem;">
-      {% for game in games %}
-        <article class="card game-card" style="display:flex;flex-direction:column;justify-content:space-between;">
-          <div>
-            <h2 style="margin-bottom:0.5rem;color:white;">{{ game.name }}</h2>
-            <p style="color:#9ca3af;margin-bottom:1.5rem;">Players: 1–{{ game.maxPlayers }}</p>
-              <p>Game description goes here</p>
-          </div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;">
+    <div>
+      <h2 style="margin:0;color:white;">Live rooms & previous games</h2>
+    </div>
+  </div>
 
-          <div style="margin-top:2rem;display:flex;gap:1rem;">
-              <a href="{{ game.url }}" class="button" style="text-align:center;width:100%;">Enter Lobby</a>
-          </div>
-        </article>
-      {% endfor %}
+  <div class="gameslist-container">
+    <div class="gameslist-child">
+      {# I have also moved the active rooms to here. #}
+      <div id="roomStatusList" class="status-grid" {% if not hasLiveRooms %}style="display:none;"{% endif %}>
+        {% if hasLiveRooms %}
+        {% for room in liveRooms %}
+            <article class="card room-status-card">
+              <div class="room-status-top">
+                <span class="status-pill {{ room.statusTone }}">{{ room.statusLabel }}</span>
+                <strong style="color:white;">{{ room.gameName }}</strong>
+              </div>
+              <div class="room-status-code">Room {{ room.roomId }}</div>
+              <p style="margin:0;color:#d1d5db;">{{ room.playerSummary }}</p>
+              <p style="margin:0;color:#9ca3af;">Host: {{ room.hostUsername }}</p>
+              <p style="margin:0;color:#9ca3af;">Players: {{ room.playerNamesDisplay }}</p>
+              <p style="margin:0;color:#6b7280;font-size:0.9rem;">{{ room.updatedAtLabel }}</p>
+            </article>
+          {% endfor %}
+    {% endif %}
+      </div>
+
+      <div id="roomStatusEmpty" class="card room-status-empty" {% if hasLiveRooms %}style="display:none;"{% endif %}>
+        <h3 style="margin:0 0 0.5rem;color:white;">No live rooms yet</h3>
+        <p style="margin:0;color:#9ca3af;">Start a chess or Go Fish lobby and it will show up here.</p>
+      </div>
     </div>
-  {% else %}
-    <div class="card" style="text-align:center;padding:4rem;">
-      <h2 style="color:#d1d5db;">Games are currently offline.</h2>
-      <p style="color:#9ca3af;">Please check back later.</p>
+
+    {# They are held within a div so that they are next to each other #}
+    <div class="gameslist-child">
+      {# This is moved/adapted from the history.peb file by Yuhe #}
+      <section>
+        <div class="card" style="padding:1rem;">
+          <table role="grid">
+            <thead>
+              <tr>
+                <th scope="col">Game</th>
+                <th scope="col">Winner</th>
+                <th scope="col">Players</th>
+                <th scope="col">Played At</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if history is empty %}
+                <tr><td colspan="4" style="text-align:center;padding:2rem;color:#9ca3af;">No match history yet.</td></tr>
+              {% else %}
+        {% for match in history %}
+                  <tr>
+                    <td><strong>{{ match.gameName }}</strong></td>
+                    <td>
+                      {% if match.winner and match.winner == user %}
+                        <strong style="color:var(--gn-primary)">{{ match.winner }} (You)</strong>
+                      {% else %}
+                {{ match.winnerLabel }}
+                {% endif %}
+                    </td>
+                    <td>{{ match.playersLabel }}</td>
+                    <td>{{ match.playedAtLabel }}</td>
+                  </tr>
+                {% endfor %}
+            {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
-  {% endif %}
+  </div>
 </section>
+
 <script src="/resources/room-status.js"></script>
+
 {% endblock %}
+
+{# Note: AI used to add missing closures - there were a few missing and it was hard to find where they were. #}

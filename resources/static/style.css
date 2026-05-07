@@ -83,6 +83,18 @@ body {
   width: 100%;
 }
 
+/* These child/container are required for history to line up beside the games list */
+.gameslist-container {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+
+}
+
+.gameslist-child {
+  flex: 1;
+}
+
 /* Cards & Containers */
 .card {
   background: var(--gn-bg-card);
