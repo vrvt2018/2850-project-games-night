@@ -2,16 +2,6 @@
 // Server-side chess engine: validates moves, detects check/checkmate/stalemate
 package com.example.games
 
-call.respond(
-    PebbleContent(
-        "chess.peb",
-        mapOf(
-            "title" to "Chess",
-            "maxPlayers" to 2
-        )
-    )
-)
-
 /**
  * Chess game implementation for 2 players using a standard 8×8 board.
  *

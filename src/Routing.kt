@@ -78,13 +78,29 @@ fun Application.configureRouting() {
 
         // Pages for each game
         get("/games/gofish") {
-            val user = call.request.cookies["AUTH_TOKEN"]?.let { getUsernameByToken(it) } ?: return@get call.respondRedirect("/")
-            call.respondTemplate("gofish.peb", mapOf("title" to "Go Fish Lobby", "user" to user))
+            val user = call.request.cookies["AUTH_TOKEN"]?.let { getUsernameByToken(it) }
+                ?: return@get call.respondRedirect("/")
+            call.respondTemplate(
+                "gofish.peb",
+                mapOf(
+                    "title" to "Go Fish Lobby",
+                    "user" to user,
+                    "maxPlayers" to 4
+                )
+            )
         }
 
         get("/games/chess") {
-            val user = call.request.cookies["AUTH_TOKEN"]?.let { getUsernameByToken(it) } ?: return@get call.respondRedirect("/")
-            call.respondTemplate("chess.peb", mapOf("title" to "Chess Lobby", "user" to user))
+            val user = call.request.cookies["AUTH_TOKEN"]?.let { getUsernameByToken(it) }
+                ?: return@get call.respondRedirect("/")
+            call.respondTemplate(
+                "chess.peb",
+                mapOf(
+                    "title" to "Chess Lobby",
+                    "user" to user,
+                    "maxPlayers" to 2
+                )
+            )
         }
 
         get("/games/{name}") {
