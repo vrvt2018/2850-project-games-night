@@ -34,6 +34,8 @@ object ChessHandler : GameSocketHandler() {
                 val from = msg["from"]?.jsonPrimitive?.intOrNull ?: return
 
                 if (g?.currentPlayer() != p.playerIndex) return
+
+                // Get the moves and send to client
                 val moves = g.legalMovesFrom(from)
                 session.send("""{"type":"LEGAL_MOVES","from":$from,"moves":$moves}""")
             }
@@ -50,9 +52,12 @@ object ChessHandler : GameSocketHandler() {
 
                 if (g.isGameOver()) {
                     RoomHandler.markRoomFinished(r)
+
+                    // Send winner to client
                     val winner = g.getWinner()
                     broadcast(r, """{"type":"GAME_END","winner":$winner,"reason":"capture"}""")
                 } else {
+                    // No game over means we must send the state to everyone - the game continues!
                     r.players.forEachIndexed { i, pl ->
                         pl.session.send(r.game!!.buildState("STATE", g, i))
                     }

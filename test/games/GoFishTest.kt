@@ -1,11 +1,13 @@
 package com.example.games
 
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class GoFishTest {
+    @Test
     private fun createGame(playerCount: Int): GoFish {
         val game = GoFish()
         repeat(playerCount) {
@@ -15,6 +17,7 @@ class GoFishTest {
         return game
     }
 
+    @Test
     fun testAddPlayers() {
         val game = GoFish()
 
@@ -26,6 +29,7 @@ class GoFishTest {
         assertFalse(game.addPlayer())
     }
 
+    @Test
     fun testStartGame2Players() {
         val game = createGame(2)
 
@@ -43,6 +47,7 @@ class GoFishTest {
         assertEquals(38, state["deckSize"])
     }
 
+    @Test
     fun testStartGame4Players() {
         val game = createGame(4)
 
@@ -59,12 +64,14 @@ class GoFishTest {
         assertEquals(32, state["deckSize"])
     }
 
+    @Test
     fun testCurrentPlayerStartsAtZero() {
         val game = createGame(2)
 
         assertEquals(0, game.currentPlayer())
     }
 
+    @Test
     fun testCannotAskSelf() {
         val game = createGame(2)
 
@@ -73,6 +80,7 @@ class GoFishTest {
         assertFalse(result)
     }
 
+    @Test
     fun testCannotAskInvalidPlayer() {
         val game = createGame(2)
 
@@ -81,6 +89,7 @@ class GoFishTest {
         assertFalse(result)
     }
 
+    @Test
     fun testEndTurnChangesPlayer() {
         val game = createGame(2)
 
@@ -91,6 +100,7 @@ class GoFishTest {
         assertEquals(1, game.currentPlayer())
     }
 
+    @Test
     fun testGetStateContainsRequiredFields() {
         val game = createGame(2)
 
@@ -106,6 +116,7 @@ class GoFishTest {
         assertNotNull(state["myHandRanks"])
     }
 
+    @Test
     fun testBooksInitiallyZero() {
         val game = createGame(2)
 
@@ -117,6 +128,7 @@ class GoFishTest {
         assertEquals(0, books[1])
     }
 
+    @Test
     fun testMyHandMatchesHandSize() {
         val game = createGame(2)
 
@@ -128,6 +140,7 @@ class GoFishTest {
         assertEquals(handSizes[0], myHand.size)
     }
 
+    @Test
     fun testMyHandRanksMatchesHandSize() {
         val game = createGame(2)
 
@@ -139,6 +152,7 @@ class GoFishTest {
         assertEquals(handSizes[0], myHandRanks.size)
     }
 
+    @Test
     fun testGameNotOverAtStart() {
         val game = createGame(2)
 

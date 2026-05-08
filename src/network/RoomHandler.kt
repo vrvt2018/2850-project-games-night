@@ -228,6 +228,9 @@ object RoomHandler {
         return player to room
     }
 
+    /**
+     * Remove all players from room
+     */
     suspend fun cleanUpRoom(
         room: Room?,
         player: NetworkPlayer?,
@@ -293,6 +296,7 @@ object RoomHandler {
     }
 
     suspend fun handleStatusSubscription(session: DefaultWebSocketServerSession) {
+        // Add sessions people to list of to whom to broadcast status
         statusSubscribers.add(session)
         try {
             session.send(buildRoomStatusListMessage())
@@ -304,6 +308,9 @@ object RoomHandler {
         }
     }
 
+    /**
+     *
+     */
     suspend fun markRoomFinished(
         room: Room?,
         winner: Int = -1,
@@ -317,6 +324,9 @@ object RoomHandler {
         broadcastRoomStatuses()
     }
 
+    /**
+     * Update room
+     */
     suspend fun touchRoom(room: Room?) {
         val targetRoom = room ?: return
         synchronized(targetRoom) {
@@ -325,13 +335,22 @@ object RoomHandler {
         broadcastRoomStatuses()
     }
 
+    /**
+     * Get username from websocket session
+     */
     private fun resolveUsername(session: DefaultWebSocketServerSession): String {
         val token = session.call.request.cookies["AUTH_TOKEN"] ?: return fallbackUsername()
         return getUsernameByToken(token) ?: fallbackUsername()
     }
 
+    /**
+     * Returns a default "guest" username
+     */
     private fun fallbackUsername(): String = "guest-${UUID.randomUUID().toString().take(8)}"
 
+    /**
+     * Creates message containing chat history
+     */
     private fun buildChatHistoryMessage(room: Room): String {
         val history =
             synchronized(room) {

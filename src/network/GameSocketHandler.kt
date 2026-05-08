@@ -8,7 +8,7 @@ import kotlinx.serialization.json.JsonObject
  */
 abstract class GameSocketHandler {
     /**
-     * For the game instane to handle any messages forwarded from the room handler
+     * For the game instance to handle any messages forwarded from the room handler
      */
     abstract suspend fun handle(
         msg: JsonObject,
