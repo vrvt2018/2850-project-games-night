@@ -71,6 +71,7 @@ fun Application.configureRouting() {
                     "user" to user,
                     "liveRooms" to liveRooms,
                     "hasLiveRooms" to liveRooms.isNotEmpty(),
+                    "history" to getMatchHistory(),
                 )
             call.respondTemplate("gamelist.peb", model = model)
         }
