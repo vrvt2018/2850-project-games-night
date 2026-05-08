@@ -9,34 +9,12 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
 
-// This description is obviously AI-generated. :-(
-
 /**
- * WebSocket handler for the Chess game.
- *
- * Protocol (JSON messages from client → server):
- *   { "type": "CREATE" }                             — Create a new room (you become the host/White)
- *   { "type": "JOIN", "roomId": "XXXX" }             — Join an existing room (you become Black)
- *   { "type": "START" }                              — Host starts the game (requires 2 players)
- *   { "type": "MOVES", "from": 12 }                 — Request legal moves for piece at index 12
- *   { "type": "MOVE", "from": 12, "to": 28 }        — Attempt to move piece from index 12 to 28
- *   { "type": "RESIGN" }                             — Current player resigns
- *
- * Protocol (JSON messages server → client):
- *   { "type": "ROOM_CREATED", "roomId": "XXXX", "playerIndex": 0 }
- *   { "type": "JOIN_OK", "playerIndex": 1 }
- *   { "type": "JOIN_FAIL", "reason": "..."}
- *   { "type": "PLAYER_UPDATE", "count": 2 }
- *   { "type": "START", ...getState() fields... }
- *   { "type": "LEGAL_MOVES", "from": 12, "moves": [28, 36, ...] }
- *   { "type": "STATE", ...getState() fields... }
- *   { "type": "MOVE_INVALID" }
- *   { "type": "GAME_END", "winner": 0, "reason": "capture" }
+ * Handler for messages from client relating to chess
  */
 object ChessHandler : GameSocketHandler() {
     /**
-     * Entry point for all WebSocket connections to /chess.
-     * Loops over incoming frames and dispatches to the appropriate handler.
+     * All messages from the client are forwarded to this function from the RoomHandler
      */
 
     override suspend fun handle(
@@ -47,7 +25,7 @@ object ChessHandler : GameSocketHandler() {
         room: Room?,
     ) {
         // To speed things up, these are asserted not-null here
-        // They are required for all functions in this
+        // They are required for all functions in this routine
         val r = room ?: return
         val g = r.game as? Chess
         val p = player ?: return

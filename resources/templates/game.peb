@@ -49,6 +49,15 @@
     <p id="waitingMessage" style="color:#9ca3af;display:none;">Waiting for host to start...</p>
   </div>
 
+
+
+{# Active Game Area #}
+{% block game  %}
+<p> Game file error! </p> {# This should never be reached. #}
+{% endblock %}
+
+
+{# Chat moved to here to prevent issues with scrolling when messages are sent. #}
   <div id="chatContainer" class="card chat-panel" style="display:none;">
     <div class="chat-panel-header">
       <div>
@@ -65,9 +74,4 @@
       <button id="btnChatSend" class="button" type="button" onclick="sendChatMessage()">Send</button>
     </div>
   </div>
-
-{# Active Game Area #}
-{% block game  %}
-<p> Game file error! </p> {# This should never be reached. #}
-{% endblock %}
 {% endblock %}

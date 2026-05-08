@@ -23,7 +23,7 @@ class Chess(
     name: String = "Chess",
 ) : Game(name, 2, 2) {
     /** Flat 64-element board. '.' means empty square. */
-    private val board: CharArray = CharArray(64) { '.' }
+    private var board: CharArray = CharArray(64) { '.' }
 
     /**
      * Player indices: 0 = White, 1 = Black.
@@ -74,48 +74,69 @@ class Chess(
         winner = -2
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
     // Move logic
-    // ─────────────────────────────────────────────────────────────────────────
 
+    fun doCastle(
+        theBoard: CharArray,
+        piece: Char,
+        to: Int,
+        from: Int,
+    ): CharArray {
+        if (piece.lowercaseChar() == 'k' && kotlin.math.abs(from - to) == 2) {
+            when (to) {
+                62 -> {
+                    // White Kingside
+                    theBoard[61] = 'R'
+                    theBoard[63] = '.'
+                }
+
+                58 -> {
+                    // White Queenside
+                    theBoard[59] = 'R'
+                    theBoard[56] = '.'
+                }
+
+                6 -> {
+                    // Black Kingside
+                    theBoard[5] = 'r'
+                    theBoard[7] = '.'
+                }
+
+                2 -> {
+                    // Black Queenside
+                    theBoard[3] = 'r'
+                    theBoard[0] = '.'
+                }
+            }
+        }
+
+        return board
+    }
+
+    /**
+     * Chess move logic
+     */
     fun makeMove(
         from: Int,
         to: Int,
     ): Boolean {
-        if (from !in 0..63 || to !in 0..63 || from == to) return false
-        val piece = board[from]
-        if (piece == '.') return false
-        if (isWhitePiece(piece) != (turn == 0)) return false
+        if (!isMovePossible(from, to)) return false
 
+        if (!isMoveLegalStrict(from, to)) {
+            return false
+        }
+
+        // Piece = board[from] to swap values around (basically to make the move)
         val target = board[to]
-        if (target != '.' && isWhitePiece(target) == isWhitePiece(piece)) return false
+        val piece = board[from]
 
-        if (!isMoveLegalStrict(from, to)) return false
-
+        // There's so much ####ing repeated code here. This must be AI slop.
         // Apply move
         board[to] = piece
         board[from] = '.'
 
         // Handle Castling Execution (King moved 2 squares)
-        if (piece.lowercaseChar() == 'k' && kotlin.math.abs(from - to) == 2) {
-            if (to == 62) {
-                // White Kingside
-                board[61] = 'R'
-                board[63] = '.'
-            } else if (to == 58) {
-                // White Queenside
-                board[59] = 'R'
-                board[56] = '.'
-            } else if (to == 6) {
-                // Black Kingside
-                board[5] = 'r'
-                board[7] = '.'
-            } else if (to == 2) {
-                // Black Queenside
-                board[3] = 'r'
-                board[0] = '.'
-            }
-        }
+        board = doCastle(board, piece, to, from)
 
         // Handle En Passant Execution
         if (piece.lowercaseChar() == 'p' && to == enPassantTarget) {
@@ -130,6 +151,7 @@ class Chess(
         }
 
         // Pawn promotion (auto-promote to queen)
+        // In other versions of chess, you can select what you promote to (only useful for knight really)
         if (piece == 'P' && to < 8) board[to] = 'Q'
         if (piece == 'p' && to >= 56) board[to] = 'q'
 
@@ -149,11 +171,12 @@ class Chess(
             val kingChar = if (turn == 0) 'K' else 'k'
             val kingPos = board.indexOfFirst { it == kingChar }
             val inCheck = if (kingPos != -1) isAttacked(kingPos, turn != 0, board) else true
-            if (inCheck) {
-                winner = 1 - turn
-            } else {
-                winner = -1
-            }
+            winner =
+                if (inCheck) {
+                    1 - turn
+                } else {
+                    -1
+                }
         }
 
         return true
@@ -166,27 +189,14 @@ class Chess(
         if (!makeMoveDryRun(from, to, board, enPassantTarget)) return false
 
         val tempBoard = board.copyOf()
+
         val piece = tempBoard[from]
 
         tempBoard[to] = piece
         tempBoard[from] = '.'
 
         // Apply Castling on temp board
-        if (piece.lowercaseChar() == 'k' && kotlin.math.abs(from - to) == 2) {
-            if (to == 62) {
-                tempBoard[61] = 'R'
-                tempBoard[63] = '.'
-            } else if (to == 58) {
-                tempBoard[59] = 'R'
-                tempBoard[56] = '.'
-            } else if (to == 6) {
-                tempBoard[5] = 'r'
-                tempBoard[7] = '.'
-            } else if (to == 2) {
-                tempBoard[3] = 'r'
-                tempBoard[0] = '.'
-            }
-        }
+        doCastle(tempBoard, piece, to, from)
 
         // Apply En Passant on temp board
         if (piece.lowercaseChar() == 'p' && to == enPassantTarget) {
@@ -238,6 +248,11 @@ class Chess(
         return false
     }
 
+    /**
+     * Utility function returning row/col of to/from pieces
+     */
+    private fun getRowCol(i: Int): Pair<Int, Int> = i / 8 to i % 8
+
     private fun isLegalMove(
         piece: Char,
         from: Int,
@@ -245,10 +260,9 @@ class Chess(
         checkBoard: CharArray,
         epTarget: Int,
     ): Boolean {
-        val fromRow = from / 8
-        val fromCol = from % 8
-        val toRow = to / 8
-        val toCol = to % 8
+        val (fromRow, fromCol) = getRowCol(from)
+        val (toRow, toCol) = getRowCol(to)
+
         val dr = toRow - fromRow
         val dc = toCol - fromCol
 
@@ -299,19 +313,19 @@ class Chess(
         val direction = if (isWhite) -1 else 1
         val startRow = if (isWhite) 6 else 1
 
-        return when {
-            dr == direction && dc == 0 && checkBoard[toRow * 8 + toCol] == '.' -> {
+        return when (dr) {
+            direction if dc == 0 && checkBoard[toRow * 8 + toCol] == '.' -> {
                 true
             }
 
-            dr == 2 * direction && dc == 0 && fromRow == startRow &&
+            2 * direction if dc == 0 && fromRow == startRow &&
                 checkBoard[toRow * 8 + toCol] == '.' &&
                 checkBoard[(fromRow + direction) * 8 + fromCol] == '.' -> {
                 true
             }
 
             // Capture or En Passant
-            dr == direction && kotlin.math.abs(dc) == 1 -> {
+            direction if kotlin.math.abs(dc) == 1 -> {
                 val toIdx = toRow * 8 + toCol
                 checkBoard[toIdx] != '.' || toIdx == epTarget
             }
@@ -435,23 +449,39 @@ class Chess(
 
     fun legalMovesFrom(from: Int): List<Int> = (0..63).filter { to -> isMoveLegalStrict(from, to) }
 
+    /**
+     * Checks if the given move is actually a possible move
+     */
+    fun isMovePossible(
+        from: Int,
+        to: Int,
+    ): Boolean {
+        if (from !in 0..63 || to !in 0..63 || from == to) return false
+        val piece = board[from]
+        if (piece == '.') return false
+        if (isWhitePiece(piece) != (turn == 0)) return false
+
+        val target = board[to]
+        return !(target != '.' && isWhitePiece(target) == isWhitePiece(piece))
+
+        // Otherwise, the move should be possible
+    }
+
     private fun makeMoveDryRun(
         from: Int,
         to: Int,
         checkBoard: CharArray,
         epTarget: Int,
     ): Boolean {
-        if (from !in 0..63 || to !in 0..63 || from == to) return false
-        val piece = checkBoard[from]
-        if (piece == '.') return false
-        if (isWhitePiece(piece) != (turn == 0)) return false
-        val target = checkBoard[to]
-        if (target != '.' && isWhitePiece(target) == isWhitePiece(piece)) return false
+        if (!isMovePossible(from, to)) return false
+
+        val piece = board[from]
         return isLegalMove(piece, from, to, checkBoard, epTarget)
     }
 
-    // Build the state for networking
-    // Needed in this class because it's unique to the game - could also put in handler
+    /**
+     * Build chess state for networking
+     */
     override fun buildState(
         type: String,
         game: Game,
