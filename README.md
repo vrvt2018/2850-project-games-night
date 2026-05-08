@@ -12,6 +12,6 @@ To add games to application, you need:
 - A javascript file containing
 - Two kotlin files
   - A back-end game class inheriting abstract class `Game`
-  - A network handler inheriting abstract class `GameHandler`
+  - A network handler inheriting abstract class `GameSocketHandler`
 
 Finally, you need to add your game to the list of games in the database, and your game should be playable!
