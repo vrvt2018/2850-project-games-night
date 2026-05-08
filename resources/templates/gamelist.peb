@@ -21,7 +21,7 @@
         {% for game in games %}
           <article class="card game-card" style="display:flex;flex-direction:column;justify-content:space-between;">
             <div>
-              <h2 style="margin-bottom:0.5rem;color:white;"><img src="resources/logos/logo_{{ game.name }}.svg" style="width:80px; alt="{{ game.name }} logo">&nbsp; &nbsp; &nbsp; &nbsp; {{ game.name }} </h2>
+              <h2 style="margin-bottom:0.5rem;color:white;"><img src="resources/logos/logo_{{ game.name }}.svg" style="width:80px;" alt="{{ game.name }} logo">&nbsp; &nbsp; &nbsp; &nbsp; {{ game.name }} </h2>
               <p style="color:#9ca3af;margin-bottom:1.5rem;">Players: 1–{{ game.maxPlayers }}</p>
             {# This is very lazy, but it means not having to edit the database #}
               {% if game.name == "Chess" %} <p> Centuries-old strategy game </p>{% endif %}
