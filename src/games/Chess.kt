@@ -31,9 +31,8 @@ class Chess(
      */
     private var turn: Int = 0
 
-    /** Set to the winner index (0 or 1), -1 for draw, -2 while active. */
+    /** Set to the winner index (0 or 1) when a king is captured, -1 for draw. */
     private var winner: Int = -2 // -2 = game not over
-    private var endReason: String = ""
 
     // Castling rights
     private var whiteKingMoved = false
@@ -71,10 +70,8 @@ class Chess(
         blackRookAMoved = false
         blackRookHMoved = false
         enPassantTarget = -1
-        turn = 0
         started = true
         winner = -2
-        endReason = ""
     }
 
     // Move logic
@@ -113,7 +110,7 @@ class Chess(
             }
         }
 
-        return theBoard
+        return board
     }
 
     /**
@@ -123,8 +120,6 @@ class Chess(
         from: Int,
         to: Int,
     ): Boolean {
-        if (isGameOver()) return false
-        if (finishIfKingCaptured()) return false
         if (!isMovePossible(from, to)) return false
 
         if (!isMoveLegalStrict(from, to)) {
@@ -134,7 +129,6 @@ class Chess(
         // Piece = board[from] to swap values around (basically to make the move)
         val target = board[to]
         val piece = board[from]
-        val movingPlayer = turn
 
         // There's so much ####ing repeated code here. This must be AI slop.
         // Apply move
@@ -169,43 +163,10 @@ class Chess(
         if (from == 0 || (target == 'r' && to == 0)) blackRookAMoved = true
         if (from == 7 || (target == 'r' && to == 7)) blackRookHMoved = true
 
-        if (target.lowercaseChar() == 'k') {
-            winner = movingPlayer
-            endReason = "king_captured"
-            return true
-        }
-        if (finishIfKingCaptured()) return true
-
         // Advance turn
         turn = 1 - turn
 
-        updateGameStatus()
-
-        return true
-    }
-
-    private fun finishIfKingCaptured(): Boolean {
-        val whiteKingExists = board.any { it == 'K' }
-        val blackKingExists = board.any { it == 'k' }
-        winner =
-            when {
-                whiteKingExists && blackKingExists -> return false
-                whiteKingExists -> 0
-                blackKingExists -> 1
-                else -> -1
-            }
-        endReason = "king_captured"
-        return true
-    }
-
-    private fun updateGameStatus() {
-        if (hasInsufficientMaterial()) {
-            winner = -1
-            endReason = "insufficient_material"
-            return
-        }
-
-        // After turn changes, check checkmate/stalemate.
+        // After turn changes, check checkmate/stalemate
         if (!hasLegalMoves(turn)) {
             val kingChar = if (turn == 0) 'K' else 'k'
             val kingPos = board.indexOfFirst { it == kingChar }
@@ -215,26 +176,10 @@ class Chess(
                     1 - turn
                 } else {
                     -1
-            }
-            endReason = if (inCheck) "checkmate" else "stalemate"
-        }
-    }
-
-    private fun hasInsufficientMaterial(): Boolean {
-        val pieces = board.withIndex().filter { it.value != '.' }
-        val nonKings = pieces.filter { it.value.lowercaseChar() != 'k' }
-
-        if (nonKings.any { it.value.lowercaseChar() in setOf('p', 'r', 'q') }) return false
-        if (nonKings.isEmpty()) return true
-        if (nonKings.size == 1 && nonKings.first().value.lowercaseChar() in setOf('b', 'n')) return true
-
-        val allBishops = nonKings.all { it.value.lowercaseChar() == 'b' }
-        if (allBishops) {
-            val bishopSquareColors = nonKings.map { (it.index / 8 + it.index % 8) % 2 }
-            return bishopSquareColors.distinct().size == 1
+                }
         }
 
-        return false
+        return true
     }
 
     private fun isMoveLegalStrict(
@@ -493,24 +438,16 @@ class Chess(
 
     override fun getWinner(): Int = winner
 
-    fun getEndReason(): String = endReason
-
     override fun getState(playerIndex: Int): Map<String, Any?> =
         mapOf(
             "board" to board.concatToString(),
             "turn" to turn,
             "gameOver" to isGameOver(),
             "winner" to if (isGameOver()) winner else null,
-            "endReason" to endReason,
             "playerIndex" to playerIndex,
         )
 
-    fun legalMovesFrom(from: Int): List<Int> =
-        if (isGameOver() || finishIfKingCaptured()) {
-            emptyList()
-        } else {
-            (0..63).filter { to -> isMoveLegalStrict(from, to) }
-        }
+    fun legalMovesFrom(from: Int): List<Int> = (0..63).filter { to -> isMoveLegalStrict(from, to) }
 
     /**
      * Checks if the given move is actually a possible move
@@ -558,7 +495,6 @@ class Chess(
             append(""","turn":${state["turn"]}""")
             append(""","gameOver":${state["gameOver"]}""")
             append(""","winner":${state["winner"] ?: "null"}""")
-            append(",\"endReason\":\"${state["endReason"]}\"")
             append(""","playerIndex":$playerIndex}""")
         }
     }
