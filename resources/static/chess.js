@@ -234,4 +234,3 @@ function renderBoard() {
     boardEl.appendChild(square);
   }
 }
-

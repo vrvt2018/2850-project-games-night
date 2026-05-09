@@ -140,7 +140,7 @@ class Chess(
             return true
         }
 
-        if (!isMoveLegalStrict(from, to)) {
+        if (!makeMoveDryRun(from, to, board, enPassantTarget)) {
             return false
         }
 
@@ -519,7 +519,7 @@ class Chess(
         if (isGameOver() || finishIfKingCaptured()) {
             emptyList()
         } else {
-            (0..63).filter { to -> isMoveLegalStrict(from, to) }
+            (0..63).filter { to -> makeMoveDryRun(from, to, board, enPassantTarget) }
         }
 
     /**
