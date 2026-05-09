@@ -45,8 +45,6 @@ class Chess(
 
     // En passant target square (0-63), or -1 if none
     private var enPassantTarget = -1
-    private var halfmoveClock = 0
-    private val positionCounts = mutableMapOf<String, Int>()
 
     // ─────────────────────────────────────────────────────────────────────────
     // Game lifecycle
@@ -73,13 +71,10 @@ class Chess(
         blackRookAMoved = false
         blackRookHMoved = false
         enPassantTarget = -1
-        halfmoveClock = 0
-        positionCounts.clear()
         turn = 0
         started = true
         winner = -2
         endReason = ""
-        recordCurrentPosition()
     }
 
     // Move logic
@@ -127,7 +122,6 @@ class Chess(
     fun makeMove(
         from: Int,
         to: Int,
-        promotion: Char? = null,
     ): Boolean {
         if (isGameOver()) return false
         if (!isMovePossible(from, to)) return false
@@ -139,8 +133,7 @@ class Chess(
         // Piece = board[from] to swap values around (basically to make the move)
         val target = board[to]
         val piece = board[from]
-        if (isPromotionMove(piece, to) && !isValidPromotion(piece, promotion)) return false
-        val isEnPassantCapture = piece.lowercaseChar() == 'p' && to == enPassantTarget && target == '.'
+        val movingPlayer = turn
 
         // There's so much ####ing repeated code here. This must be AI slop.
         // Apply move
@@ -151,7 +144,7 @@ class Chess(
         board = doCastle(board, piece, to, from)
 
         // Handle En Passant Execution
-        if (isEnPassantCapture) {
+        if (piece.lowercaseChar() == 'p' && to == enPassantTarget) {
             val captureIdx = if (isWhitePiece(piece)) to + 8 else to - 8
             board[captureIdx] = '.'
         }
@@ -164,7 +157,8 @@ class Chess(
 
         // Pawn promotion (auto-promote to queen)
         // In other versions of chess, you can select what you promote to (only useful for knight really)
-        if (isPromotionMove(piece, to)) board[to] = promotedPiece(piece, promotion)
+        if (piece == 'P' && to < 8) board[to] = 'Q'
+        if (piece == 'p' && to >= 56) board[to] = 'q'
 
         // Update castling rights
         if (piece == 'K') whiteKingMoved = true
@@ -174,12 +168,15 @@ class Chess(
         if (from == 0 || (target == 'r' && to == 0)) blackRookAMoved = true
         if (from == 7 || (target == 'r' && to == 7)) blackRookHMoved = true
 
-        halfmoveClock = if (piece.lowercaseChar() == 'p' || target != '.' || isEnPassantCapture) 0 else halfmoveClock + 1
+        if (target.lowercaseChar() == 'k') {
+            winner = movingPlayer
+            endReason = "king_captured"
+            return true
+        }
 
         // Advance turn
         turn = 1 - turn
 
-        recordCurrentPosition()
         updateGameStatus()
 
         return true
@@ -204,66 +201,8 @@ class Chess(
                     -1
             }
             endReason = if (inCheck) "checkmate" else "stalemate"
-            return
-        }
-
-        if (halfmoveClock >= 100) {
-            winner = -1
-            endReason = "fifty_move_rule"
-            return
-        }
-
-        if ((positionCounts[positionKey()] ?: 0) >= 3) {
-            winner = -1
-            endReason = "threefold_repetition"
         }
     }
-
-    private fun isPromotionMove(
-        piece: Char,
-        to: Int,
-    ): Boolean = (piece == 'P' && to < 8) || (piece == 'p' && to >= 56)
-
-    private fun isValidPromotion(
-        piece: Char,
-        promotion: Char?,
-    ): Boolean {
-        if (promotion == null) return true
-        val chosen = promotion ?: 'q'
-        return chosen.lowercaseChar() in setOf('q', 'r', 'b', 'n') && isWhitePiece(chosen) == isWhitePiece(piece)
-    }
-
-    private fun promotedPiece(
-        piece: Char,
-        promotion: Char?,
-    ): Char {
-        val chosen = promotion?.lowercaseChar() ?: 'q'
-        return if (isWhitePiece(piece)) chosen.uppercaseChar() else chosen
-    }
-
-    private fun recordCurrentPosition(): Int {
-        val key = positionKey()
-        val count = (positionCounts[key] ?: 0) + 1
-        positionCounts[key] = count
-        return count
-    }
-
-    private fun positionKey(): String =
-        listOf(
-            board.concatToString(),
-            turn.toString(),
-            castlingRightsKey(),
-            enPassantTarget.toString(),
-        ).joinToString("|")
-
-    private fun castlingRightsKey(): String =
-        buildString {
-            if (!whiteKingMoved && !whiteRookHMoved && board[63] == 'R') append('K')
-            if (!whiteKingMoved && !whiteRookAMoved && board[56] == 'R') append('Q')
-            if (!blackKingMoved && !blackRookHMoved && board[7] == 'r') append('k')
-            if (!blackKingMoved && !blackRookAMoved && board[0] == 'r') append('q')
-            if (isEmpty()) append('-')
-        }
 
     private fun hasInsufficientMaterial(): Boolean {
         val pieces = board.withIndex().filter { it.value != '.' }
@@ -489,25 +428,19 @@ class Chess(
             if (isAttacked(from, !isWhite, checkBoard)) return false
 
             if (isWhite && from == 60) {
-                if (to == 62 && !whiteKingMoved && !whiteRookHMoved && checkBoard[63] == 'R' &&
-                    checkBoard[61] == '.' && checkBoard[62] == '.'
-                ) {
+                if (to == 62 && !whiteKingMoved && !whiteRookHMoved && checkBoard[61] == '.' && checkBoard[62] == '.') {
                     if (!isAttacked(61, false, checkBoard)) return true
                 }
-                if (to == 58 && !whiteKingMoved && !whiteRookAMoved && checkBoard[56] == 'R' &&
-                    checkBoard[59] == '.' && checkBoard[58] == '.' &&
+                if (to == 58 && !whiteKingMoved && !whiteRookAMoved && checkBoard[59] == '.' && checkBoard[58] == '.' &&
                     checkBoard[57] == '.'
                 ) {
                     if (!isAttacked(59, false, checkBoard)) return true
                 }
             } else if (!isWhite && from == 4) {
-                if (to == 6 && !blackKingMoved && !blackRookHMoved && checkBoard[7] == 'r' &&
-                    checkBoard[5] == '.' && checkBoard[6] == '.'
-                ) {
+                if (to == 6 && !blackKingMoved && !blackRookHMoved && checkBoard[5] == '.' && checkBoard[6] == '.') {
                     if (!isAttacked(5, true, checkBoard)) return true
                 }
-                if (to == 2 && !blackKingMoved && !blackRookAMoved && checkBoard[0] == 'r' &&
-                    checkBoard[3] == '.' && checkBoard[2] == '.' &&
+                if (to == 2 && !blackKingMoved && !blackRookAMoved && checkBoard[3] == '.' && checkBoard[2] == '.' &&
                     checkBoard[1] == '.'
                 ) {
                     if (!isAttacked(3, true, checkBoard)) return true
@@ -571,7 +504,6 @@ class Chess(
         if (isWhitePiece(piece) != (turn == 0)) return false
 
         val target = board[to]
-        if (target.lowercaseChar() == 'k') return false
         return !(target != '.' && isWhitePiece(target) == isWhitePiece(piece))
 
         // Otherwise, the move should be possible

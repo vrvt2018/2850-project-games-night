@@ -6,6 +6,15 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import kotlin.test.Test
 
 class ChessTest {
+    private fun setField(
+        game: Chess,
+        name: String,
+        value: Any,
+    ) {
+        val field = Chess::class.java.getDeclaredField(name)
+        field.isAccessible = true
+        field.set(game, value)
+    }
 
     private fun setupGame(): Chess {
         val game = Chess()
@@ -190,5 +199,57 @@ class ChessTest {
         assertTrue(json.contains("\"type\":\"UPDATE\""))
         assertTrue(json.contains("\"turn\":0"))
         assertTrue(json.contains("\"gameOver\":false"))
+    }
+
+    @Test
+    fun testCheckmateSetsWinnerAndReason() {
+        val game = setupGame()
+
+        assertTrue(game.makeMove(53, 45))
+        assertTrue(game.makeMove(12, 28))
+        assertTrue(game.makeMove(54, 38))
+        assertTrue(game.makeMove(3, 39))
+
+        assertTrue(game.isGameOver())
+        assertEquals(1, game.getWinner())
+        assertEquals("checkmate", game.getEndReason())
+        assertFalse(game.makeMove(52, 44))
+    }
+
+    @Test
+    fun testInsufficientMaterialEndsAsDraw() {
+        val game = setupGame()
+        val customBoard = CharArray(64) { '.' }
+        customBoard[52] = 'K'
+        customBoard[4] = 'k'
+
+        setField(game, "board", customBoard)
+        setField(game, "turn", 0)
+
+        assertTrue(game.makeMove(52, 44))
+
+        assertTrue(game.isGameOver())
+        assertEquals(-1, game.getWinner())
+        assertEquals("insufficient_material", game.getEndReason())
+        assertFalse(game.makeMove(4, 12))
+    }
+
+    @Test
+    fun testCapturingKingEndsWithWinner() {
+        val game = setupGame()
+        val customBoard = CharArray(64) { '.' }
+        customBoard[60] = 'K'
+        customBoard[4] = 'k'
+        customBoard[12] = 'R'
+
+        setField(game, "board", customBoard)
+        setField(game, "turn", 0)
+
+        assertTrue(game.makeMove(12, 4))
+
+        assertTrue(game.isGameOver())
+        assertEquals(0, game.getWinner())
+        assertEquals("king_captured", game.getEndReason())
+        assertFalse(game.makeMove(4, 12))
     }
 }

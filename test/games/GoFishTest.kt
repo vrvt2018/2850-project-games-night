@@ -1,11 +1,35 @@
 package com.example.games
 
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class GoFishTest {
+    private fun setField(
+        game: GoFish,
+        name: String,
+        value: Any,
+    ) {
+        val field = GoFish::class.java.getDeclaredField(name)
+        field.isAccessible = true
+        field.set(game, value)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> replaceMutableListField(
+        game: GoFish,
+        name: String,
+        values: List<T>,
+    ) {
+        val field = GoFish::class.java.getDeclaredField(name)
+        field.isAccessible = true
+        val list = field.get(game) as MutableList<T>
+        list.clear()
+        list.addAll(values)
+    }
+
     private fun createGame(playerCount: Int): GoFish {
         val game = GoFish()
         repeat(playerCount) {
@@ -144,5 +168,140 @@ class GoFishTest {
 
         assertFalse(game.isGameOver())
         assertEquals(-2, game.getWinner())
+    }
+
+    @Test
+    fun testMissRequiresEndTurnAndDoesNotDrawRepeatedly() {
+        val game = createGame(2)
+        replaceMutableListField(
+            game,
+            "hands",
+            listOf(
+                mutableListOf(Card(Suit.Hearts, 1)),
+                mutableListOf(Card(Suit.Spades, 2)),
+            ),
+        )
+        replaceMutableListField(
+            game,
+            "drawPile",
+            listOf(
+                Card(Suit.Clubs, 3),
+                Card(Suit.Clubs, 4),
+            ),
+        )
+        replaceMutableListField(game, "books", listOf(0, 0))
+        setField(game, "turn", 0)
+        setField(game, "mustEndTurn", false)
+
+        assertFalse(game.askForCard(1, "A"))
+
+        var state = game.getState(0)
+        assertEquals(1, state["deckSize"])
+        assertEquals(2, (state["myHand"] as List<*>).size)
+        assertTrue(game.isWaitingForEndTurn())
+
+        assertFalse(game.askForCard(1, "A"))
+
+        state = game.getState(0)
+        assertEquals(1, state["deckSize"])
+        assertEquals(2, (state["myHand"] as List<*>).size)
+
+        game.endTurn()
+
+        assertEquals(1, game.currentPlayer())
+        assertFalse(game.isWaitingForEndTurn())
+    }
+
+    @Test
+    fun testFinalBookEndsGameWithWinner() {
+        val game = createGame(2)
+        replaceMutableListField(
+            game,
+            "hands",
+            listOf(
+                mutableListOf(Card(Suit.Hearts, 1), Card(Suit.Diamonds, 1), Card(Suit.Spades, 1)),
+                mutableListOf(Card(Suit.Clubs, 1)),
+            ),
+        )
+        replaceMutableListField(game, "drawPile", emptyList<Card>())
+        replaceMutableListField(game, "books", listOf(6, 6))
+        setField(game, "turn", 0)
+        setField(game, "mustEndTurn", false)
+
+        assertTrue(game.askForCard(1, "A"))
+
+        assertTrue(game.isGameOver())
+        assertEquals(0, game.getWinner())
+    }
+
+    @Test
+    fun testTiedBookCountEndsAsDraw() {
+        val game = createGame(4)
+        replaceMutableListField(
+            game,
+            "hands",
+            listOf(
+                mutableListOf<Card>(),
+                mutableListOf<Card>(),
+                mutableListOf<Card>(),
+                mutableListOf<Card>(),
+            ),
+        )
+        replaceMutableListField(game, "drawPile", emptyList<Card>())
+        replaceMutableListField(game, "books", listOf(4, 4, 3, 2))
+        setField(game, "turn", 0)
+        setField(game, "mustEndTurn", false)
+
+        game.endTurn()
+
+        assertTrue(game.isGameOver())
+        assertEquals(-1, game.getWinner())
+    }
+
+    @Test
+    fun testEmptyDeckEndsByBookCountWhenOnlyOnePlayerCanMove() {
+        val game = createGame(2)
+        replaceMutableListField(
+            game,
+            "hands",
+            listOf(
+                mutableListOf(Card(Suit.Hearts, 9)),
+                mutableListOf(Card(Suit.Spades, 9)),
+            ),
+        )
+        replaceMutableListField(game, "drawPile", emptyList<Card>())
+        replaceMutableListField(game, "books", listOf(0, 0))
+        setField(game, "turn", 0)
+        setField(game, "mustEndTurn", false)
+
+        assertTrue(game.askForCard(1, "9"))
+
+        assertTrue(game.isGameOver())
+        assertEquals(-1, game.getWinner())
+        val state = game.getState(0)
+        assertEquals(listOf(0, 0), state["books"])
+    }
+
+    @Test
+    fun testEmptyDeckWinnerUsesCompletedBooksOnly() {
+        val game = createGame(2)
+        replaceMutableListField(
+            game,
+            "hands",
+            listOf(
+                mutableListOf(Card(Suit.Hearts, 9)),
+                mutableListOf(Card(Suit.Spades, 9)),
+            ),
+        )
+        replaceMutableListField(game, "drawPile", emptyList<Card>())
+        replaceMutableListField(game, "books", listOf(2, 1))
+        setField(game, "turn", 0)
+        setField(game, "mustEndTurn", false)
+
+        assertTrue(game.askForCard(1, "9"))
+
+        assertTrue(game.isGameOver())
+        assertEquals(0, game.getWinner())
+        assertEquals(listOf(2, 1), game.getState(0)["books"])
     }
 }
