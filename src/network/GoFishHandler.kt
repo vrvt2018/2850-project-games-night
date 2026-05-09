@@ -5,6 +5,8 @@ import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.send
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -22,6 +24,7 @@ object GoFishHandler : GameSocketHandler() {
         const val REASON_NOT_YOUR_TURN = "Not your turn"
         const val REASON_INVALID_TARGET = "Invalid player target (out of range)"
         const val REASON_INVALID_RANK = "Invalid card rank (empty or malformed)"
+        const val REASON_INVALID_ASK = "You must ask an active opponent for a rank in your hand"
         const val REASON_GAME_NOT_STARTED = "Game not started"
         const val REASON_GAME_OVER = "Game already ended"
     }
@@ -91,12 +94,17 @@ object GoFishHandler : GameSocketHandler() {
                 return
             }
 
-        val askSuccess = game.askForCard(target, rank)
+        val askOutcome = game.askForCardOutcome(target, rank)
+        if (askOutcome == GoFish.AskOutcome.INVALID) {
+            session.send(buildErrorMsg(Protocol.REASON_INVALID_ASK))
+            return
+        }
+        val askSuccess = askOutcome == GoFish.AskOutcome.HIT
 
         if (game.isGameOver()) {
             val winner = game.getWinner()
             RoomHandler.markRoomFinished(room, winner)
-            broadcast(room, buildGameEndMsg(winner))
+            broadcast(room, buildGameEndMsg(winner, game))
         } else {
             room.players.forEachIndexed { index, pl ->
                 pl.session.send(buildStateMsg(Protocol.TYPE_ASK_RESULT, game, index, askSuccess))
@@ -121,7 +129,7 @@ object GoFishHandler : GameSocketHandler() {
         if (game.isGameOver()) {
             val winner = game.getWinner()
             RoomHandler.markRoomFinished(room, winner)
-            broadcast(room, buildGameEndMsg(winner))
+            broadcast(room, buildGameEndMsg(winner, game))
         } else {
             room.players.forEachIndexed { index, pl ->
                 pl.session.send(buildStateMsg(Protocol.TYPE_STATE, game, index))
@@ -138,13 +146,21 @@ object GoFishHandler : GameSocketHandler() {
             ),
         )
 
-    private fun buildGameEndMsg(winner: Int): String =
-        Json.encodeToString(
-            mapOf(
-                "type" to Protocol.TYPE_GAME_END,
-                "winner" to winner,
-            ),
-        )
+    private fun buildGameEndMsg(
+        winner: Int,
+        game: GoFish,
+    ): String =
+        buildJsonObject {
+            put("type", Protocol.TYPE_GAME_END)
+            put("winner", winner)
+            val books = game.getState(-1)["books"] as List<*>
+            put(
+                "books",
+                buildJsonArray {
+                    books.forEach { add(it as Int) }
+                },
+            )
+        }.toString()
 
     internal fun buildStateMsg(
         type: String,

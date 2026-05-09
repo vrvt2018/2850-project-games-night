@@ -14,6 +14,8 @@ let selectedSquare = -1;
 let legalMovesForSelected = [];
 
 // UI Elements
+const elLobby = document.getElementById("lobby");
+const elWaitingRoom = document.getElementById("waitingRoom");
 const elGameArea = document.getElementById("gameArea");
 const elGameOver = document.getElementById("gameOverArea");
 const boardEl = document.getElementById("boardEl");
@@ -105,18 +107,32 @@ ws.onmessage = (e) => {
       break;
 
     case "GAME_END":
-      elGameArea.style.display = "none";
-      elGameOver.style.display = "block";
-      const gameOverTitle = document.querySelector("#gameOverArea h1");
-      if (gameOverTitle) {
-        gameOverTitle.innerText = msg.reason === "player_left" ? "Game Ended" : "Checkmate";
-      }
-      const winnerText = msg.message || (msg.winner === myPlayerIndex ? "You Win!" : 
-                         (msg.winner === -1 ? "Draw!" : "Opponent Wins!"));
-      document.getElementById("winnerText").innerText = winnerText;
+      showGameOver(msg);
       break;
   }
 };
+
+function showGameOver(msg) {
+  elGameArea.style.display = "none";
+  elGameOver.style.display = "block";
+  const gameOverTitle = document.querySelector("#gameOverArea h1");
+  if (gameOverTitle) {
+    const titles = {
+      player_left: "Game Ended",
+      resignation: "Resignation",
+      stalemate: "Draw",
+      insufficient_material: "Draw",
+      fifty_move_rule: "Draw",
+      threefold_repetition: "Draw",
+      checkmate: "Checkmate",
+      king_captured: "Game Over"
+    };
+    gameOverTitle.innerText = titles[msg.reason || msg.endReason] || "Game Over";
+  }
+  const winnerText = msg.message || (msg.winner === myPlayerIndex ? "You Win!" :
+                     (msg.winner === -1 ? "Draw!" : "Opponent Wins!"));
+  document.getElementById("winnerText").innerText = winnerText;
+}
 
 function resign() {
   if (confirm("Are you sure you want to resign?")) {
@@ -153,6 +169,11 @@ function handleSquareClick(index) {
 
 // State Rendering
 function updateGameState(state) {
+  if (state.gameOver) {
+    showGameOver(state);
+    return;
+  }
+
   currentBoard = state.board;
   currentTurn = state.turn;
   

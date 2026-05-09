@@ -42,8 +42,9 @@ object ChessHandler : GameSocketHandler() {
                 if (g?.currentPlayer() != p.playerIndex) return
                 val from = msg["from"]?.jsonPrimitive?.intOrNull ?: return
                 val to = msg["to"]?.jsonPrimitive?.intOrNull ?: return
+                val promotion = msg["promotion"]?.jsonPrimitive?.content?.firstOrNull()
 
-                if (!g.makeMove(from, to)) {
+                if (!g.makeMove(from, to, promotion)) {
                     session.send("""{"type":"MOVE_INVALID"}""")
                     return
                 }
@@ -51,7 +52,7 @@ object ChessHandler : GameSocketHandler() {
                 if (g.isGameOver()) {
                     val winner = g.getWinner()
                     RoomHandler.markRoomFinished(r, winner)
-                    broadcast(r, """{"type":"GAME_END","winner":$winner,"reason":"capture"}""")
+                    broadcast(r, """{"type":"GAME_END","winner":$winner,"reason":"${g.getEndReason()}"}""")
                 } else {
                     r.players.forEachIndexed { i, pl ->
                         pl.session.send(r.game!!.buildState("STATE", g, i))

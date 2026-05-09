@@ -10,6 +10,12 @@ package com.example.games
 */
 
 class GoFish : Game("Go Fish", 4, 2) {
+    enum class AskOutcome {
+        HIT,
+        MISS,
+        INVALID,
+    }
+
     private val deck = Deck()
     private val drawPile = mutableListOf<Card>()
     private val hands = mutableListOf<MutableList<Card>>()
@@ -17,6 +23,7 @@ class GoFish : Game("Go Fish", 4, 2) {
 
     private var turn: Int = 0
     private var winner: Int = -2
+    private var mustEndTurn: Boolean = false
 
     override fun addPlayer(): Boolean {
         if (numPlayers >= maxPlayers) return false
@@ -44,12 +51,17 @@ class GoFish : Game("Go Fish", 4, 2) {
             hands.add(hand)
             books.add(0)
         }
+        repeat(numPlayers) { checkBooks(it) }
 
         turn = 0
         winner = -2
+        mustEndTurn = false
+        drawIfHandIsEmpty(turn)
     }
 
     fun currentPlayer(): Int = turn
+
+    fun isWaitingForEndTurn(): Boolean = mustEndTurn
 
     override fun buildState(
         type: String,
@@ -69,6 +81,7 @@ class GoFish : Game("Go Fish", 4, 2) {
             append(""","numPlayers":${state["numPlayers"]}""")
             append(""","gameOver":${state["gameOver"]}""")
             append(""","winner":${state["winner"] ?: "null"}""")
+            append(""","mustEndTurn":${state["mustEndTurn"]}""")
             append(""","books":[$books]""")
             append(""","handSizes":[$handSizes]""")
             append(""","myHand":[$myHand]""")
@@ -79,32 +92,45 @@ class GoFish : Game("Go Fish", 4, 2) {
     fun askForCard(
         targetPlayer: Int,
         rank: String,
-    ): Boolean {
-        if (isGameOver()) return false
-        if (targetPlayer !in 0..numPlayers || targetPlayer == turn) return false
+    ): Boolean = askForCardOutcome(targetPlayer, rank) == AskOutcome.HIT
+
+    fun askForCardOutcome(
+        targetPlayer: Int,
+        rank: String,
+    ): AskOutcome {
+        if (isGameOver()) return AskOutcome.INVALID
+        if (mustEndTurn) return AskOutcome.INVALID
+        if (targetPlayer !in 0 until numPlayers || targetPlayer == turn) return AskOutcome.INVALID
 
         val currentHand = hands[turn]
-        if (currentHand.none { it.rankString() == rank }) return false
+        if (currentHand.none { it.rankString() == rank }) return AskOutcome.INVALID
 
         val targetHand = hands[targetPlayer]
+        if (targetHand.isEmpty()) return AskOutcome.INVALID
+
         val matching = targetHand.filter { it.rankString() == rank }
 
         return if (matching.isNotEmpty()) {
             targetHand.removeAll(matching)
             hands[turn].addAll(matching)
             checkBooks(turn)
-            true
+            drawIfHandIsEmpty(turn)
+            checkGameOver()
+            AskOutcome.HIT
         } else {
             if (drawPile.isNotEmpty()) {
                 hands[turn].add(drawPile.removeFirst())
                 checkBooks(turn)
             }
-            false
+            mustEndTurn = true
+            checkGameOver()
+            AskOutcome.MISS
         }
     }
 
     fun endTurn() {
         if (isGameOver()) return
+        mustEndTurn = false
 
         var attempts = 0
         do {
@@ -116,6 +142,7 @@ class GoFish : Game("Go Fish", 4, 2) {
             attempts < numPlayers
         )
 
+        drawIfHandIsEmpty(turn)
         checkGameOver()
     }
 
@@ -135,14 +162,29 @@ class GoFish : Game("Go Fish", 4, 2) {
         val totalBooks = books.sum()
 
         if (totalBooks >= 13) {
-            winner = books.indices.maxByOrNull { books[it] } ?: -1
+            winner = determineWinner()
             return
         }
 
-        if (drawPile.isEmpty() && hands.all { it.isEmpty() }) {
-            val max = books.maxOrNull() ?: 0
-            winner = if (max > 0) books.indexOf(max) else -1
+        if (drawPile.isEmpty() && activePlayerCount() < 2) {
+            winner = determineWinner()
         }
+    }
+
+    private fun drawIfHandIsEmpty(playerIndex: Int) {
+        if (playerIndex in hands.indices && hands[playerIndex].isEmpty() && drawPile.isNotEmpty()) {
+            hands[playerIndex].add(drawPile.removeFirst())
+            checkBooks(playerIndex)
+        }
+    }
+
+    private fun activePlayerCount(): Int = hands.count { it.isNotEmpty() }
+
+    private fun determineWinner(): Int {
+        val max = books.maxOrNull() ?: 0
+        if (max == 0) return -1
+        val leaders = books.withIndex().filter { it.value == max }
+        return if (leaders.size == 1) leaders.first().index else -1
     }
 
     override fun isGameOver(): Boolean = winner != -2
@@ -158,6 +200,7 @@ class GoFish : Game("Go Fish", 4, 2) {
             "numPlayers" to numPlayers,
             "gameOver" to isGameOver(),
             "winner" to if (isGameOver()) winner else null,
+            "mustEndTurn" to mustEndTurn,
             "books" to books.toList(),
             "handSizes" to hands.map { it.size },
             "myHand" to myHand,

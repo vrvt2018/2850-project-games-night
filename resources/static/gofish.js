@@ -78,7 +78,14 @@ ws.onmessage = (e) => {
       elGameOver.style.display = "block";
       const winnerText = msg.winner === myPlayerIndex ? "You Win!" :
                          (msg.winner === -1 ? "It's a tie!" : `Player ${msg.winner + 1} Wins!`);
-      document.getElementById("winnerText").innerText = winnerText;
+      const scoreText = Array.isArray(msg.books)
+        ? ` Books: ${msg.books.map((score, i) => `Player ${i + 1}: ${score}`).join(" | ")}`
+        : "";
+      document.getElementById("winnerText").innerText = winnerText + scoreText;
+      break;
+
+    case "ERROR":
+      showActionMessage(msg.reason || "That move is not allowed.", "#fca5a5");
       break;
   }
 };
@@ -101,23 +108,28 @@ function endTurn() {
 }
 
 function showActionResult(success) {
+  const mustEndTurn = !success;
+  showActionMessage(
+    success
+      ? "Match found! They handed over their cards. You get another turn."
+      : "Go Fish! You drew a card. End your turn.",
+    success ? "#34d399" : "#fca5a5",
+  );
+  document.getElementById("btnAsk").disabled = mustEndTurn;
+  document.getElementById("btnEndTurn").style.display = mustEndTurn ? "inline-block" : "none";
+}
+
+function showActionMessage(text, color) {
   const resEl = document.getElementById("actionResult");
   resEl.style.display = "block";
-  if (success) {
-    resEl.style.color = "#34d399";
-    resEl.innerText = "Match found! They handed over their cards. You get another turn.";
-    document.getElementById("btnEndTurn").style.display = "none";
-  } else {
-    resEl.style.color = "#fca5a5";
-    resEl.innerText = "Go Fish! You drew a card.";
-    document.getElementById("btnAsk").disabled = true;
-    document.getElementById("btnEndTurn").style.display = "inline-block";
-  }
+  resEl.style.color = color;
+  resEl.innerText = text;
 }
 
 // State Rendering
 function updateGameState(state) {
   const isMyTurn = state.turn === myPlayerIndex;
+  const mustEndTurn = Boolean(state.mustEndTurn);
 
   // Update turn alert
   const alertEl = document.getElementById("turnAlert");
@@ -137,12 +149,12 @@ function updateGameState(state) {
   const actionArea = document.getElementById("actionArea");
   if (isMyTurn) {
     actionArea.style.display = "block";
-    document.getElementById("btnAsk").disabled = false;
+    document.getElementById("btnAsk").disabled = mustEndTurn;
 
     // Clear old result unless we just had an ask result
     if (state.type !== "ASK_RESULT") {
       document.getElementById("actionResult").style.display = "none";
-      document.getElementById("btnEndTurn").style.display = "none";
+      document.getElementById("btnEndTurn").style.display = mustEndTurn ? "inline-block" : "none";
     }
 
     // Populate rank dropdown based on current hand
@@ -152,12 +164,16 @@ function updateGameState(state) {
     uniqueRanks.forEach(r => {
       rankSelect.innerHTML += `<option value="${r}">${r}</option>`;
     });
+    if (uniqueRanks.length === 0) {
+      document.getElementById("btnAsk").disabled = true;
+      document.getElementById("btnEndTurn").style.display = "inline-block";
+    }
 
     // Populate target dropdown
     const targetSelect = document.getElementById("askPlayerSelect");
     targetSelect.innerHTML = "<option value='' disabled selected>-- Select player --</option>";
     state.handSizes.forEach((size, i) => {
-      if (i !== myPlayerIndex) {
+      if (i !== myPlayerIndex && size > 0) {
         targetSelect.innerHTML += `<option value="${i}">Player ${i + 1} (${size} cards)</option>`;
       }
     });
