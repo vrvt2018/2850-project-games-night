@@ -27,19 +27,25 @@ object ChessHandler : GameSocketHandler() {
         // To speed things up, these are asserted not-null here
         // They are required for all functions in this routine
         val r = room ?: return
-        val g = r.game as? Chess
+        val g = r.game as? Chess ?: return
         val p = player ?: return
+
+        if (g.isGameOver()) {
+            broadcast(r, buildGameEndMsg(g))
+            return
+        }
+
         when (type) {
             "CHESS_MOVES" -> {
                 val from = msg["from"]?.jsonPrimitive?.intOrNull ?: return
 
-                if (g?.currentPlayer() != p.playerIndex) return
+                if (g.currentPlayer() != p.playerIndex) return
                 val moves = g.legalMovesFrom(from)
                 session.send("""{"type":"LEGAL_MOVES","from":$from,"moves":$moves}""")
             }
 
             "CHESS_MOVE" -> {
-                if (g?.currentPlayer() != p.playerIndex) return
+                if (g.currentPlayer() != p.playerIndex) return
                 val from = msg["from"]?.jsonPrimitive?.intOrNull ?: return
                 val to = msg["to"]?.jsonPrimitive?.intOrNull ?: return
 
@@ -49,9 +55,8 @@ object ChessHandler : GameSocketHandler() {
                 }
 
                 if (g.isGameOver()) {
-                    val winner = g.getWinner()
-                    RoomHandler.markRoomFinished(r, winner)
-                    broadcast(r, """{"type":"GAME_END","winner":$winner,"reason":"${g.getEndReason()}"}""")
+                    RoomHandler.markRoomFinished(r, g.getWinner())
+                    broadcast(r, buildGameEndMsg(g))
                 } else {
                     r.players.forEachIndexed { i, pl ->
                         pl.session.send(r.game!!.buildState("STATE", g, i))
@@ -67,4 +72,7 @@ object ChessHandler : GameSocketHandler() {
             }
         }
     }
+
+    private fun buildGameEndMsg(game: Chess): String =
+        """{"type":"GAME_END","winner":${game.getWinner()},"reason":"${game.getEndReason()}"}"""
 }
