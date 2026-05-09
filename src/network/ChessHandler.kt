@@ -42,9 +42,8 @@ object ChessHandler : GameSocketHandler() {
                 if (g?.currentPlayer() != p.playerIndex) return
                 val from = msg["from"]?.jsonPrimitive?.intOrNull ?: return
                 val to = msg["to"]?.jsonPrimitive?.intOrNull ?: return
-                val promotion = msg["promotion"]?.jsonPrimitive?.content?.firstOrNull()
 
-                if (!g.makeMove(from, to, promotion)) {
+                if (!g.makeMove(from, to)) {
                     session.send("""{"type":"MOVE_INVALID"}""")
                     return
                 }
