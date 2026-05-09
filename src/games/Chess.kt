@@ -124,27 +124,16 @@ class Chess(
         to: Int,
     ): Boolean {
         if (isGameOver()) return false
-        if (finishIfKingCaptured()) return false
         if (!isMovePossible(from, to)) return false
 
-        val target = board[to]
-        val piece = board[from]
-        val movingPlayer = turn
-
-        if (target.lowercaseChar() == 'k') {
-            if (!makeMoveDryRun(from, to, board, enPassantTarget)) return false
-            board[to] = piece
-            board[from] = '.'
-            winner = movingPlayer
-            endReason = "king_captured"
-            return true
-        }
-
-        if (!makeMoveDryRun(from, to, board, enPassantTarget)) {
+        if (!isMoveLegalStrict(from, to)) {
             return false
         }
 
         // Piece = board[from] to swap values around (basically to make the move)
+        val target = board[to]
+        val piece = board[from]
+        val movingPlayer = turn
 
         // There's so much ####ing repeated code here. This must be AI slop.
         // Apply move
@@ -184,27 +173,12 @@ class Chess(
             endReason = "king_captured"
             return true
         }
-        if (finishIfKingCaptured()) return true
 
         // Advance turn
         turn = 1 - turn
 
         updateGameStatus()
 
-        return true
-    }
-
-    private fun finishIfKingCaptured(): Boolean {
-        val whiteKingExists = board.any { it == 'K' }
-        val blackKingExists = board.any { it == 'k' }
-        winner =
-            when {
-                whiteKingExists && blackKingExists -> return false
-                whiteKingExists -> 0
-                blackKingExists -> 1
-                else -> -1
-            }
-        endReason = "king_captured"
         return true
     }
 
@@ -515,12 +489,7 @@ class Chess(
             "playerIndex" to playerIndex,
         )
 
-    fun legalMovesFrom(from: Int): List<Int> =
-        if (isGameOver() || finishIfKingCaptured()) {
-            emptyList()
-        } else {
-            (0..63).filter { to -> makeMoveDryRun(from, to, board, enPassantTarget) }
-        }
+    fun legalMovesFrom(from: Int): List<Int> = (0..63).filter { to -> isMoveLegalStrict(from, to) }
 
     /**
      * Checks if the given move is actually a possible move

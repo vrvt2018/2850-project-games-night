@@ -12,7 +12,6 @@ let currentBoard = "";
 let currentTurn = 0;
 let selectedSquare = -1;
 let legalMovesForSelected = [];
-let gameFinished = false;
 
 // UI Elements
 const elLobby = document.getElementById("lobby");
@@ -114,9 +113,6 @@ ws.onmessage = (e) => {
 };
 
 function showGameOver(msg) {
-  gameFinished = true;
-  selectedSquare = -1;
-  legalMovesForSelected = [];
   elGameArea.style.display = "none";
   elGameOver.style.display = "block";
   const gameOverTitle = document.querySelector("#gameOverArea h1");
@@ -146,7 +142,6 @@ function resign() {
 
 // Gameplay Action
 function handleSquareClick(index) {
-  if (gameFinished) return;
   if (currentTurn !== myPlayerIndex) return; // Not our turn
 
   const piece = currentBoard[index];
@@ -179,7 +174,6 @@ function updateGameState(state) {
     return;
   }
 
-  gameFinished = false;
   currentBoard = state.board;
   currentTurn = state.turn;
   
